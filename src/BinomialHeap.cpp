@@ -61,7 +61,7 @@ BinomialHeap::Node* BinomialHeap::merge(Node* h1, Node* h2) {
 void BinomialHeap::consolidate() {
     if (!head) return;
     
-    int maxDegree = 64; // Suficiente para 2^64 elementos
+    int maxDegree = 64;
     std::vector<Node*> degreeTable(maxDegree, nullptr);
     
     Node* current = head;
@@ -153,7 +153,7 @@ int BinomialHeap::extractMin() {
     
     // Merge de los hijos de minNode con la lista restante
     Node* childList = minNode->child;
-    // Invertir la lista de hijos
+    // Invertir la lista dparae hijos
     Node* reversed = nullptr;
     while (childList) {
         Node* next = childList->sibling;

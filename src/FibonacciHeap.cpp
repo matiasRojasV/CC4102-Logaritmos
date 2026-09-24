@@ -107,7 +107,6 @@ void FibonacciHeap::consolidate() {
     for (int i = 0; i < maxDegree; i++) {
         if (degreeTable[i]) {
             Node* node = degreeTable[i];
-            // Clear stale pointers before inserting into root list
             node->left = node;
             node->right = node;
             insertIntoRootList(node);
@@ -172,7 +171,7 @@ int FibonacciHeap::extractMin() {
     Node* oldMin = minNode;
     int key = oldMin->key;
     
-    // 1. Promover todos los hijos del mínimo a raíces de forma segura
+    // Promover todos los hijos del mínimo a raíces de forma segura
     if (oldMin->child) {
         Node* child = oldMin->child;
         std::vector<Node*> children;
@@ -193,10 +192,10 @@ int FibonacciHeap::extractMin() {
         }
     }
     
-    // 2. Remover explícitamente a oldMin de la lista de raíces
+    // Remover explícitamente a oldMin de la lista de raíces
     removeFromList(oldMin);
     
-    // 3. Ajustar minNode y consolidar
+    // Ajustar minNode y consolidar
     if (oldMin == oldMin->right) {
         minNode = nullptr; // Era el único nodo en todo el heap
     } else {
@@ -209,9 +208,7 @@ int FibonacciHeap::extractMin() {
         nodeMap[key] = nullptr;
     }
     
-    // Ahora es seguro eliminarlo
     delete oldMin;
-    
     return key;
 }
 

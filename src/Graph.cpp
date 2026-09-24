@@ -11,7 +11,7 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
     std::mt19937 gen(std::random_device{}());
     std::uniform_real_distribution<> weightDist(1.0, 100.0);
     
-    // 1. Árbol cobertor sugerido por el enunciado (O(V) y cero memoria extra)
+    // Árbol cobertor (O(V) y cero memoria extra)
     for (int i = 1; i < v; i++) {
         std::uniform_int_distribution<> dist(0, i - 1);
         int target = dist(gen);
@@ -22,7 +22,7 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
         numEdges++;
     }
     
-    // 2. Añadir aristas restantes aleatorias
+    // Añadir aristas restantes aleatorias
     std::uniform_int_distribution<> vertexDist(0, v - 1);
     
     while (numEdges < e) {

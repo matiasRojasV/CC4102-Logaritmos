@@ -25,10 +25,7 @@ int main() {
     std::vector<ExperimentResult> results;
     
     std::cout << "=== Prim's Algorithm: Binomial vs Fibonacci Heap ===" << std::endl;
-    std::cout << std::endl;
-    
-    // Nota: Los parámetros de las series (A, B, C, D) deben ser definidos
-    // según el enunciado específico del trabajo.
+    std::cout << std::endl;   
     
     // Serie A: v creciente, e = 2v
     std::cout << "Serie A: Variando vértices (e = 2v)" << std::endl;
