@@ -6,7 +6,8 @@
 
 MST PrimAlgorithm::primBinomial(const Graph& graph) {
     int v = graph.getNumVertices();
-    
+    int e = graph.getNumEdges();
+
     MST result;
     result.numOperations = 0;
     result.totalWeight = 0.0;
@@ -19,6 +20,7 @@ MST PrimAlgorithm::primBinomial(const Graph& graph) {
     std::vector<int> parent(v, -1);
     
     BinomialHeap pq;
+    pq.swapsHistory.reserve(e);
     
     // Comenzar desde el vértice 0
     key[0] = 0.0;
@@ -56,12 +58,13 @@ MST PrimAlgorithm::primBinomial(const Graph& graph) {
     // Transferencia eficiente de métricas (se transfieren los recursos en O(1) con std::move)
     result.opsHistory = std::move(pq.swapsHistory);
     result.timeHistory = std::move(pq.timeHistory);
-    
+
     return result;
 }
 
 MST PrimAlgorithm::primFibonacci(const Graph& graph) {
     int v = graph.getNumVertices();
+    int e = graph.getNumEdges();
     
     MST result;
     result.numOperations = 0;
@@ -76,6 +79,7 @@ MST PrimAlgorithm::primFibonacci(const Graph& graph) {
     std::vector<int> parent(v, -1);
     
     FibonacciHeap pq;
+    pq.cutsHistory.reserve(e);
     
     // Comenzar desde el vértice 0
     key[0] = 0.0;

@@ -8,12 +8,18 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
     }
     
     adj.resize(v);
+    const int estimatedDegree = std::max(1, (2 * e) / std::max(1, v));
+    for (auto& neighbors : adj) {
+        neighbors.reserve(estimatedDegree);
+    }
     std::mt19937 gen(std::random_device{}());
+    
 
     std::uniform_real_distribution<> weightDist(0.000001, 1.0);
     
     std::unordered_set<std::pair<int, int>, EdgeHash> existingEdges;
-    
+    existingEdges.reserve(static_cast<size_t>(e) * 2);
+
     // Árbol cobertor 
     for (int i = 1; i < v; i++) {
         std::uniform_int_distribution<> dist(0, i - 1);

@@ -8,12 +8,19 @@
 #include "Graph.h"
 #include "PrimAlgorithm.h"
 
-// Función auxiliar para ejecutar 10 repeticiones de una configuración y promediar
+#ifdef _GLIBCXX_DEBUG
+static constexpr int REPETITIONS = 3;
+#else
+static constexpr int REPETITIONS = 4;
+#endif
+
+// Función auxiliar para ejecutar varias repeticiones de una configuración y promediar
 void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream& outfile) {
     int v = 1 << i; // v = 2^i
     int e = 1 << j; // e = 2^j
     
-    std::cout << "Ejecutando " << serie << " (v=2^" << i << ", e=2^" << j << ") - 10 repeticiones..." << std::flush;
+    std::cout << "Ejecutando " << serie << " (v=2^" << i << ", e=2^" << j << ") - "
+              << REPETITIONS << " repeticiones..." << std::flush;
     
     double totalTimeBinomial = 0.0;
     double totalTimeFibonacci = 0.0;
@@ -21,10 +28,9 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
     long long totalOpsFibonacci = 0;
     bool allValid = true;
     
-    for (int rep = 0; rep < 10; rep++) {
+    for (int rep = 0; rep < REPETITIONS; rep++) {
         // Generar un grafo nuevo y distinto en cada repetición
         Graph graph(v, e);
-        
         MST mstBinomial = PrimAlgorithm::primBinomial(graph);
         MST mstFibonacci = PrimAlgorithm::primFibonacci(graph);
         
@@ -37,13 +43,15 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
         totalTimeFibonacci += mstFibonacci.executionTime;
         totalOpsBinomial += mstBinomial.numOperations;
         totalOpsFibonacci += mstFibonacci.numOperations;
+        
+        std::cout << "." << std::flush;
     }
     
     // Calcular promedios
-    double avgTimeBinomial = totalTimeBinomial / 10.0;
-    double avgTimeFibonacci = totalTimeFibonacci / 10.0;
-    long long avgOpsBinomial = totalOpsBinomial / 10;
-    long long avgOpsFibonacci = totalOpsFibonacci / 10;
+    double avgTimeBinomial = totalTimeBinomial / REPETITIONS;
+    double avgTimeFibonacci = totalTimeFibonacci / REPETITIONS;
+    long long avgOpsBinomial = totalOpsBinomial / REPETITIONS;
+    long long avgOpsFibonacci = totalOpsFibonacci / REPETITIONS;
     
     std::cout << " OK" << std::endl;
     std::cout << "  Binomial  : " << std::scientific << avgTimeBinomial << "s (" << avgOpsBinomial << " ops)" << std::endl;
@@ -56,7 +64,7 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
                 << std::fixed << std::setprecision(6) << avgTimeBinomial << "," 
                 << avgTimeFibonacci << ","
                 << avgOpsBinomial << "," << avgOpsFibonacci << ","
-                << (allValid ? "YES" : "NO") << "\n";
+                << (allValid ? "YES" : "NO") << "\n" << std::flush;
     }
 }
 
@@ -75,6 +83,45 @@ int main() {
     // 6.3.1. Costo total
     // ---------------------------------------------------------
 
+    // En debug usamos grafos más pequeños para testear más rápido.
+#ifdef _GLIBCXX_DEBUG
+    // Serie A: v fijo pequeño, variando e
+    std::cout << "--- Iniciando Serie A ---" << std::endl;
+    int i_A = 12;
+    std::vector<int> j_A = {12, 13, 14};
+    for (int j : j_A) {
+        ejecutarConfiguracion(i_A, j, "Serie A", outfile);
+    }
+
+    // Serie B: e fijo, variando v
+    std::cout << "--- Iniciando Serie B ---" << std::endl;
+    int j_B = 14;
+    std::vector<int> i_B = {10, 11, 12, 13, 14};
+    for (int i : i_B) {
+        ejecutarConfiguracion(i, j_B, "Serie B", outfile);
+    }
+
+    // ---------------------------------------------------------
+    // 6.3.2. Costo amortizado
+    // ---------------------------------------------------------
+
+    // Serie C: v fijo pequeño, variando e
+    std::cout << "--- Iniciando Serie C ---" << std::endl;
+    int i_C = 10;
+    std::vector<int> j_C = {10, 11, 12};
+    for (int j : j_C) {
+        ejecutarConfiguracion(i_C, j, "Serie C", outfile);
+    }
+
+    // Serie D: e fijo, variando v
+    std::cout << "--- Iniciando Serie D ---" << std::endl;
+    int j_D = 12;
+    std::vector<int> i_D = {8, 9, 10, 11, 12};
+    for (int i : i_D) {
+        ejecutarConfiguracion(i, j_D, "Serie D", outfile);
+    }
+
+#else
     // Serie A: v fijo (i=20), variando e (j entre 20 y 24)
     std::cout << "--- Iniciando Serie A ---" << std::endl;
     int i_A = 20;
@@ -110,6 +157,7 @@ int main() {
     for (int i : i_D) {
         ejecutarConfiguracion(i, j_D, "Serie D", outfile);
     }
+#endif
 
     if (outfile.is_open()) {
         outfile.close();

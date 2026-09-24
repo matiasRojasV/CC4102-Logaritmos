@@ -1,6 +1,5 @@
 #include "FibonacciHeap.h"
 #include <algorithm>
-#include <chrono>
 #include <stdexcept>
 
 FibonacciHeap::FibonacciHeap() : minNode(nullptr), size(0) {}
@@ -226,8 +225,6 @@ void FibonacciHeap::decreaseKey(int key, double newPriority) {
         throw std::invalid_argument("New priority must be less than current priority");
     }
     
-    // Iniciar reloj
-    auto start = std::chrono::high_resolution_clock::now();
     currentCuts = 0; // Reiniciar contador antes de realizar cortes
     
     node->priority = newPriority;
@@ -242,13 +239,8 @@ void FibonacciHeap::decreaseKey(int key, double newPriority) {
         minNode = node;
     }
     
-    // Detener reloj
-    auto end = std::chrono::high_resolution_clock::now();
-    long long duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
-    
     // Guardar métricas
     cutsHistory.push_back(currentCuts);
-    timeHistory.push_back(duration);
 }
 
 int FibonacciHeap::getSize() const {

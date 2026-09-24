@@ -21,7 +21,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BINDIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^
-	@echo "[MAKE] Compilación exitosa: $(TARGET)"
+	@echo "✓ Compilación exitosa (Release -O3): $(TARGET)"
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
@@ -29,7 +29,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	@rm -rf $(BINDIR)
-	@echo "[MAKE] Archivos de compilación eliminados"
+	@echo "✓ Archivos de compilación eliminados"
 
 run: $(TARGET)
 	@mkdir -p results
@@ -37,11 +37,3 @@ run: $(TARGET)
 
 debug: CXXFLAGS = -std=c++20 -O0 -g -Wall -Wextra -D_GLIBCXX_DEBUG
 debug: clean all
-
-help:
-	@echo "Targets disponibles:"
-	@echo "  make all       - Compilar el proyecto"
-	@echo "  make clean     - Eliminar archivos compilados"
-	@echo "  make run       - Compilar y ejecutar"
-	@echo "  make debug     - Compilar con símbolos de debug"
-	@echo "  make help      - Mostrar esta ayuda"
