@@ -29,9 +29,11 @@ private:
               parent(nullptr), child(nullptr), left(this), right(this) {}
     };
     
+
     Node* minNode;  // Puntero al nodo mínimo
     int size;       // Número de elementos
-    
+    int currentCuts = 0;
+
     // Mapa para acceso rápido a nodos por clave
     std::vector<Node*> nodeMap;
     
@@ -71,6 +73,10 @@ private:
     void deleteAll(Node* node);
     
 public:
+
+    std::vector<int> cutsHistory;
+    std::vector<long long> timeHistory;
+    
     /**
      * Constructor que crea una cola de Fibonacci vacía.
      */

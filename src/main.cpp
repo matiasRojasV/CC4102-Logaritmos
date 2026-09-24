@@ -3,102 +3,118 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
+#include <cmath>
+#include <string>
 #include "Graph.h"
 #include "PrimAlgorithm.h"
 
-/**
- * @file main.cpp
- * @brief Batería de experimentos para comparar colas binomiales vs Fibonacci.
- * 
- * Ejecuta cuatro series de experimentos (A, B, C, D) midiendo tiempos
- * y operaciones con alta precisión usando reloj monótono.
- */
-
-struct ExperimentResult {
-    int v, e;
-    double timeBinomial, timeFibonacci;
-    long long opsBinomial, opsFibonacci;
-    bool valid;
-};
+// Función auxiliar para ejecutar 10 repeticiones de una configuración y promediar
+void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream& outfile) {
+    int v = 1 << i; // v = 2^i
+    int e = 1 << j; // e = 2^j
+    
+    std::cout << "Ejecutando " << serie << " (v=2^" << i << ", e=2^" << j << ") - 10 repeticiones..." << std::flush;
+    
+    double totalTimeBinomial = 0.0;
+    double totalTimeFibonacci = 0.0;
+    long long totalOpsBinomial = 0;
+    long long totalOpsFibonacci = 0;
+    bool allValid = true;
+    
+    for (int rep = 0; rep < 10; rep++) {
+        // Generar un grafo nuevo y distinto en cada repetición
+        Graph graph(v, e);
+        
+        MST mstBinomial = PrimAlgorithm::primBinomial(graph);
+        MST mstFibonacci = PrimAlgorithm::primFibonacci(graph);
+        
+        // Verificar que el peso del MST sea igual en ambas implementaciones
+        if (!PrimAlgorithm::verifyMST(mstBinomial, mstFibonacci)) {
+            allValid = false;
+        }
+        
+        totalTimeBinomial += mstBinomial.executionTime;
+        totalTimeFibonacci += mstFibonacci.executionTime;
+        totalOpsBinomial += mstBinomial.numOperations;
+        totalOpsFibonacci += mstFibonacci.numOperations;
+    }
+    
+    // Calcular promedios
+    double avgTimeBinomial = totalTimeBinomial / 10.0;
+    double avgTimeFibonacci = totalTimeFibonacci / 10.0;
+    long long avgOpsBinomial = totalOpsBinomial / 10;
+    long long avgOpsFibonacci = totalOpsFibonacci / 10;
+    
+    std::cout << " OK" << std::endl;
+    std::cout << "  Binomial  : " << std::scientific << avgTimeBinomial << "s (" << avgOpsBinomial << " ops)" << std::endl;
+    std::cout << "  Fibonacci : " << std::scientific << avgTimeFibonacci << "s (" << avgOpsFibonacci << " ops)" << std::endl;
+    std::cout << "  Validez   : " << (allValid ? "Aprobada" : "FALLÓ") << "\n" << std::endl;
+    
+    // Guardar en el CSV
+    if (outfile.is_open()) {
+        outfile << serie << "," << i << "," << j << "," << v << "," << e << ","
+                << std::fixed << std::setprecision(6) << avgTimeBinomial << "," 
+                << avgTimeFibonacci << ","
+                << avgOpsBinomial << "," << avgOpsFibonacci << ","
+                << (allValid ? "YES" : "NO") << "\n";
+    }
+}
 
 int main() {
-    std::vector<ExperimentResult> results;
+    std::cout << "=== Tarea 1: Algoritmo de Prim y Análisis Amortizado ===" << std::endl;
+    std::cout << "Iniciando batería de experimentos...\n" << std::endl;
     
-    std::cout << "=== Prim's Algorithm: Binomial vs Fibonacci Heap ===" << std::endl;
-    std::cout << std::endl;   
-    
-    // Serie A: v creciente, e = 2v
-    std::cout << "Serie A: Variando vértices (e = 2v)" << std::endl;
-    
-    std::vector<int> verticesSeries = {10, 50, 100, 500, 1000, 5000};
-    
-    for (int v : verticesSeries) {
-        int e = 2 * v;
-        
-        try {
-            std::cout << "  Testing v=" << v << ", e=" << e << "..." << std::flush;
-            
-            Graph graph(v, e);
-            
-            MST mstBinomial = PrimAlgorithm::primBinomial(graph);
-            MST mstFibonacci = PrimAlgorithm::primFibonacci(graph);
-            
-            bool valid = PrimAlgorithm::verifyMST(mstBinomial, mstFibonacci);
-            
-            ExperimentResult res;
-            res.v = v;
-            res.e = e;
-            res.timeBinomial = mstBinomial.executionTime;
-            res.timeFibonacci = mstFibonacci.executionTime;
-            res.opsBinomial = mstBinomial.numOperations;
-            res.opsFibonacci = mstFibonacci.numOperations;
-            res.valid = valid;
-            
-            results.push_back(res);
-            
-            std::cout << " OK" << std::endl;
-            std::cout << "    Binomial: " << std::scientific << mstBinomial.executionTime 
-                      << "s (" << mstBinomial.numOperations << " ops)" << std::endl;
-            std::cout << "    Fibonacci: " << std::scientific << mstFibonacci.executionTime 
-                      << "s (" << mstFibonacci.numOperations << " ops)" << std::endl;
-            std::cout << "    MST Weight: " << std::fixed << std::setprecision(2) 
-                      << mstBinomial.totalWeight << " (Valid: " << (valid ? "YES" : "NO") << ")" << std::endl;
-            
-        } catch (const std::exception& e) {
-            std::cerr << " ERROR: " << e.what() << std::endl;
-        }
-    }
-    
-    std::cout << std::endl << "=== Resultados ===" << std::endl;
-    std::cout << std::setw(6) << "V" << std::setw(8) << "E" 
-              << std::setw(15) << "T Binomial" << std::setw(15) << "T Fibonacci"
-              << std::setw(12) << "Speedup" << std::setw(8) << "Valid" << std::endl;
-    std::cout << std::string(64, '-') << std::endl;
-    
-    for (const auto& res : results) {
-        double speedup = res.timeBinomial / res.timeFibonacci;
-        std::cout << std::setw(6) << res.v << std::setw(8) << res.e 
-                  << std::scientific << std::setprecision(3)
-                  << std::setw(15) << res.timeBinomial 
-                  << std::setw(15) << res.timeFibonacci
-                  << std::fixed << std::setprecision(2)
-                  << std::setw(12) << speedup 
-                  << std::setw(8) << (res.valid ? "YES" : "NO") << std::endl;
-    }
-    
-    // Guardar resultados en archivo para análisis posterior
-    std::ofstream outfile("results/experimental_data.csv");
+    std::ofstream outfile("results_experimental.csv");
     if (outfile.is_open()) {
-        outfile << "V,E,TimeBinomial,TimeFibonacci,OpsBinomial,OpsFibonacci,Valid\n";
-        for (const auto& res : results) {
-            outfile << res.v << "," << res.e << "," 
-                    << res.timeBinomial << "," << res.timeFibonacci << ","
-                    << res.opsBinomial << "," << res.opsFibonacci << ","
-                    << res.valid << "\n";
-        }
-        outfile.close();
-        std::cout << "\nResultados guardados en results/experimental_data.csv" << std::endl;
+        outfile << "Serie,i,j,V,E,TimeBinomial,TimeFibonacci,OpsBinomial,OpsFibonacci,Valid\n";
+    } else {
+        std::cerr << "Error: No se pudo crear el archivo de resultados CSV." << std::endl;
     }
-    
+
+    // ---------------------------------------------------------
+    // 6.3.1. Costo total
+    // ---------------------------------------------------------
+
+    // Serie A: v fijo (i=20), variando e (j entre 20 y 24)
+    std::cout << "--- Iniciando Serie A ---" << std::endl;
+    int i_A = 20;
+    std::vector<int> j_A = {20, 21, 22, 23, 24};
+    for (int j : j_A) {
+        ejecutarConfiguracion(i_A, j, "Serie A", outfile);
+    }
+
+    // Serie B: e fijo (j=24), variando v (i entre 18 y 22)
+    std::cout << "--- Iniciando Serie B ---" << std::endl;
+    int j_B = 24;
+    std::vector<int> i_B = {18, 19, 20, 21, 22};
+    for (int i : i_B) {
+        ejecutarConfiguracion(i, j_B, "Serie B", outfile);
+    }
+
+    // ---------------------------------------------------------
+    // 6.3.2. Costo amortizado
+    // ---------------------------------------------------------
+
+    // Serie C: v fijo (i=18), variando e (j entre 18 y 22)
+    std::cout << "--- Iniciando Serie C ---" << std::endl;
+    int i_C = 18;
+    std::vector<int> j_C = {18, 19, 20, 21, 22};
+    for (int j : j_C) {
+        ejecutarConfiguracion(i_C, j, "Serie C", outfile);
+    }
+
+    // Serie D: e fijo (j=22), variando v (i entre 14 y 18)
+    std::cout << "--- Iniciando Serie D ---" << std::endl;
+    int j_D = 22;
+    std::vector<int> i_D = {14, 15, 16, 17, 18};
+    for (int i : i_D) {
+        ejecutarConfiguracion(i, j_D, "Serie D", outfile);
+    }
+
+    if (outfile.is_open()) {
+        outfile.close();
+        std::cout << "Todos los resultados fueron guardados en 'results_experimental.csv'" << std::endl;
+    }
+
     return 0;
 }

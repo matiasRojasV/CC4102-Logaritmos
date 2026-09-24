@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -O0 -g -Wall -Wextra -D_GLIBCXX_DEBUG
+CXXFLAGS = -std=c++20 -O3 -Wall -Wextra
 CPPFLAGS = -I./include
 BINDIR = build
 SRCDIR = src
@@ -14,14 +14,14 @@ SOURCES = $(SRCDIR)/Graph.cpp \
 OBJECTS = $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 TARGET = $(BINDIR)/prim_experiment
 
-.PHONY: all clean run
+.PHONY: all clean run debug help
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BINDIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^
-	@echo "✓ Compilación exitosa: $(TARGET)"
+	@echo "[MAKE] Compilación exitosa: $(TARGET)"
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
@@ -29,13 +29,13 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	@rm -rf $(BINDIR)
-	@echo "✓ Archivos de compilación eliminados"
+	@echo "[MAKE] Archivos de compilación eliminados"
 
 run: $(TARGET)
 	@mkdir -p results
 	./$(TARGET)
 
-debug: CXXFLAGS += -g -O0
+debug: CXXFLAGS = -std=c++20 -O0 -g -Wall -Wextra -D_GLIBCXX_DEBUG
 debug: clean all
 
 help:

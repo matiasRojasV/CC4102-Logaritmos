@@ -1,5 +1,7 @@
 #include "FibonacciHeap.h"
 #include <algorithm>
+#include <chrono>
+#include <stdexcept>
 
 FibonacciHeap::FibonacciHeap() : minNode(nullptr), size(0) {}
 
@@ -114,38 +116,6 @@ void FibonacciHeap::consolidate() {
     }
 }
 
-void FibonacciHeap::cut(Node* node) {
-    if (!node->parent) return;
-    
-    if (node->parent->child == node) {
-        if (node->right != node) {
-            node->parent->child = node->right;
-        } else {
-            node->parent->child = nullptr;
-        }
-    }
-    
-    removeFromList(node);
-    node->parent->degree--;
-    node->parent = nullptr;
-    node->marked = false;
-    
-    insertIntoRootList(node);
-}
-
-void FibonacciHeap::cascadingCut(Node* node) {
-    Node* parent = node->parent;
-    
-    if (parent) {
-        if (!node->marked) {
-            node->marked = true;
-        } else {
-            cut(node);
-            cascadingCut(parent);
-        }
-    }
-}
-
 void FibonacciHeap::insert(int key, double priority) {
     Node* newNode = new Node(key, priority);
     
@@ -212,6 +182,39 @@ int FibonacciHeap::extractMin() {
     return key;
 }
 
+void FibonacciHeap::cut(Node* node) {
+    if (!node->parent) return;
+    
+    if (node->parent->child == node) {
+        if (node->right != node) {
+            node->parent->child = node->right;
+        } else {
+            node->parent->child = nullptr;
+        }
+    }
+    
+    removeFromList(node);
+    node->parent->degree--;
+    node->parent = nullptr;
+    node->marked = false;
+    
+    insertIntoRootList(node);
+    currentCuts++; // Contabilizar cada corte realizado (directo o en cascada)
+}
+
+void FibonacciHeap::cascadingCut(Node* node) {
+    Node* parent = node->parent;
+    
+    if (parent) {
+        if (!node->marked) {
+            node->marked = true;
+        } else {
+            cut(node); // Al llamar a cut(), currentCuts se incrementará automáticamente
+            cascadingCut(parent);
+        }
+    }
+}
+
 void FibonacciHeap::decreaseKey(int key, double newPriority) {
     if (key < 0 || key >= (int)nodeMap.size() || !nodeMap[key]) {
         throw std::out_of_range("Key not found in heap");
@@ -223,10 +226,14 @@ void FibonacciHeap::decreaseKey(int key, double newPriority) {
         throw std::invalid_argument("New priority must be less than current priority");
     }
     
+    // Iniciar reloj
+    auto start = std::chrono::high_resolution_clock::now();
+    currentCuts = 0; // Reiniciar contador antes de realizar cortes
+    
     node->priority = newPriority;
     
     if (node->parent && node->priority < node->parent->priority) {
-        Node* parent = node->parent;  // Save parent before cut() sets it to nullptr
+        Node* parent = node->parent;  // Guardar referencia antes de que cut ponga parent = nullptr
         cut(node);
         cascadingCut(parent);
     }
@@ -234,6 +241,14 @@ void FibonacciHeap::decreaseKey(int key, double newPriority) {
     if (!minNode || node->priority < minNode->priority) {
         minNode = node;
     }
+    
+    // Detener reloj
+    auto end = std::chrono::high_resolution_clock::now();
+    long long duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    
+    // Guardar métricas
+    cutsHistory.push_back(currentCuts);
+    timeHistory.push_back(duration);
 }
 
 int FibonacciHeap::getSize() const {

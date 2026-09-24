@@ -9,9 +9,12 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
     
     adj.resize(v);
     std::mt19937 gen(std::random_device{}());
-    std::uniform_real_distribution<> weightDist(1.0, 100.0);
+
+    std::uniform_real_distribution<> weightDist(0.000001, 1.0);
     
-    // Árbol cobertor (O(V) y cero memoria extra)
+    std::unordered_set<std::pair<int, int>, EdgeHash> existingEdges;
+    
+    // Árbol cobertor 
     for (int i = 1; i < v; i++) {
         std::uniform_int_distribution<> dist(0, i - 1);
         int target = dist(gen);
@@ -19,6 +22,11 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
         
         adj[i].push_back({target, weight});
         adj[target].push_back({i, weight});
+
+        int min_node = std::min(i, target);
+        int max_node = std::max(i, target);
+        existingEdges.insert({min_node, max_node});
+
         numEdges++;
     }
     
@@ -31,19 +39,16 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
         
         if (u == v_node) continue; // Evitar reflexivas
         
-        // Búsqueda lineal en el vector (rapidísimo por caché, sin requerir std::set)
-        bool exists = false;
-        for (const auto& edge : adj[u]) {
-            if (edge.first == v_node) {
-                exists = true;
-                break;
-            }
-        }
-        
-        if (!exists) {
+        int min_node = std::min(u, v_node);
+        int max_node = std::max(u, v_node);
+
+        if (existingEdges.find({min_node, max_node}) == existingEdges.end()) {
             double weight = weightDist(gen);
+            
             adj[u].push_back({v_node, weight});
             adj[v_node].push_back({u, weight});
+            
+            existingEdges.insert({min_node, max_node});
             numEdges++;
         }
     }

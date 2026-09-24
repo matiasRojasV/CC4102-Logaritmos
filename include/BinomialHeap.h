@@ -54,6 +54,8 @@ private:
     void deleteAll(Node* node);
     
 public:
+    std::vector<int> swapsHistory;
+    std::vector<long long> timeHistory;
     /**
      * Constructor que crea una cola binomial vacía.
      */

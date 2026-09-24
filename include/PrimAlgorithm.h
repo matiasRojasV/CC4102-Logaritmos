@@ -12,10 +12,12 @@
  * @brief Resultado del algoritmo de Prim (Minimum Spanning Tree).
  */
 struct MST {
+    std::vector<int> opsHistory; 
+    std::vector<long long> timeHistory;
     std::vector<std::pair<int, int>> edges;  // Aristas del MST
-    double totalWeight;                       // Peso total
-    long long numOperations;                  // Número de operaciones realizadas
-    double executionTime;                     // Tiempo de ejecución
+    double totalWeight = 0.0;                // Peso total
+    long long numOperations = 0;             // Número de operaciones realizadas
+    double executionTime = 0.0;                // Tiempo de ejecución
 };
 
 /**

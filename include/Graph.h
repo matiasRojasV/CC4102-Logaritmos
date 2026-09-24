@@ -4,14 +4,21 @@
 #include <vector>
 #include <utility>
 #include <random>
+#include <unordered_set>
+
+// Función hash personalizada para pares de enteros
+struct EdgeHash {
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        auto h1 = std::hash<int>{}(p.first);
+        auto h2 = std::hash<int>{}(p.second);
+        // Combinación de hashes usando bitwise XOR y shifts
+        return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+    }
+};
 
 /**
  * @class Graph
  * @brief Generador y estructura de grafo con listas de adyacencia.
- * 
- * Implementa un grafo no dirigido usando listas de adyacencia.
- * Proporciona métodos para generar grafos aleatorios conexos evitando
- * aristas reflexivas y repetidas.
  */
 class Graph {
 private:
@@ -20,46 +27,12 @@ private:
     // Lista de adyacencia: adj[u] = {(v, weight), ...}
     std::vector<std::vector<std::pair<int, double>>> adj;
     
-    /**
-     * Crea un árbol cobertor aleatorio para garantizar conexidad.
-     */
-    void createSpanningTree(std::mt19937& gen);
-    
 public:
-    /**
-     * Constructor que genera un grafo aleatorio conexo.
-     * 
-     * @param v Número de vértices
-     * @param e Número de aristas (debe ser >= v-1 para conexidad)
-     */
     Graph(int v, int e);
-    
-    /**
-     * Destructor.
-     */
     ~Graph();
-    
-    /**
-     * Retorna el número de vértices.
-     */
     int getNumVertices() const;
-    
-    /**
-     * Retorna el número de aristas.
-     */
     int getNumEdges() const;
-    
-    /**
-     * Retorna la lista de adyacencia del vértice u.
-     * 
-     * @param u Vértice origen
-     * @return Vector de pares (destino, peso)
-     */
     const std::vector<std::pair<int, double>>& getAdjacency(int u) const;
-    
-    /**
-     * Imprime la estructura del grafo (para debug).
-     */
     void printGraph() const;
 };
 

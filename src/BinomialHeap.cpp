@@ -1,4 +1,7 @@
 #include "BinomialHeap.h"
+#include <chrono>
+#include <stdexcept>
+
 
 BinomialHeap::BinomialHeap() : head(nullptr), size(0) {}
 
@@ -188,16 +191,33 @@ void BinomialHeap::decreaseKey(int key, double newPriority) {
         throw std::invalid_argument("New priority must be less than current priority");
     }
     
+    // Iniciar reloj
+    auto start = std::chrono::high_resolution_clock::now();
+    
     node->priority = newPriority;
+    int swaps = 0;
     
     // Bubble up si es necesario
     while (node->parent && node->priority < node->parent->priority) {
+        // CORRECCIÓN: Usar 'key' en lugar de 'vertex'
         std::swap(node->key, node->parent->key);
         std::swap(node->priority, node->parent->priority);
+        
+        // Actualizar el mapa de acceso rápido (crucial para tu implementación)
         nodeMap[node->key] = node;
         nodeMap[node->parent->key] = node->parent;
+        
         node = node->parent;
+        swaps++; // Contabilizar operación estructural
     }
+    
+    // Detener reloj
+    auto end = std::chrono::high_resolution_clock::now();
+    long long duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    
+    // Guardar métricas
+    swapsHistory.push_back(swaps);
+    timeHistory.push_back(duration);
 }
 
 int BinomialHeap::getSize() const {

@@ -2,6 +2,7 @@
 #include <chrono>
 #include <limits>
 #include <cmath>
+#include <utility>
 
 MST PrimAlgorithm::primBinomial(const Graph& graph) {
     int v = graph.getNumVertices();
@@ -51,6 +52,10 @@ MST PrimAlgorithm::primBinomial(const Graph& graph) {
     
     auto endTime = std::chrono::high_resolution_clock::now();
     result.executionTime = std::chrono::duration<double>(endTime - startTime).count();
+    
+    // Transferencia eficiente de métricas (se transfieren los recursos en O(1) con std::move)
+    result.opsHistory = std::move(pq.swapsHistory);
+    result.timeHistory = std::move(pq.timeHistory);
     
     return result;
 }
