@@ -21,7 +21,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BINDIR)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $@ $^
-	@echo "✓ Compilación exitosa (Release -O3): $(TARGET)"
+	@echo "Compilación exitosa (Release -O3): $(TARGET)"
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
@@ -29,7 +29,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 
 clean:
 	@rm -rf $(BINDIR)
-	@echo "✓ Archivos de compilación eliminados"
+	@echo "Archivos de compilación eliminados"
 
 run: $(TARGET)
 	@mkdir -p results

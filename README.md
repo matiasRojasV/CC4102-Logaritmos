@@ -13,24 +13,23 @@ El objetivo es comparar empíricamente el desempeño de ambas estructuras y vali
 
 ```
 .
-├── include/             # Archivos header
-│   ├── Graph.h          # Generador y estructura del grafo
-│   ├── BinomialHeap.h   # Cola binomial
-│   ├── FibonacciHeap.h  # Cola de Fibonacci
-│   └── PrimAlgorithm.h  # Algoritmo de Prim
-├── src/                 # Archivos de implementación
+├── include/                # Archivos header
+│   ├── Graph.h             # Generador y estructura del grafo
+│   ├── BinomialHeap.h      # Cola binomial
+│   ├── FibonacciHeap.h     # Cola de Fibonacci
+│   └── PrimAlgorithm.h     # Algoritmo de Prim
+├── src/                    # Archivos de implementación
 │   ├── Graph.cpp
 │   ├── BinomialHeap.cpp
 │   ├── FibonacciHeap.cpp
 │   ├── PrimAlgorithm.cpp
-│   └── main.cpp        # Batería de experimentos
-├── build/              # Directorio de compilación
-├── results/            # Resultados de los experimentos (CSV)
-├── report/             # Informe en PDF/LaTeX
-├── data/               # Datos de entrada (si es necesario)
-├── README.md           # Este archivo
-└── Makefile            # Compilación
-
+│   └── main.cpp            # Batería de experimentos
+├── python/
+│   └── genPlots.py
+├── build/                  # Directorio de compilación
+├── README.md               # Este archivo
+├── CMakeLists.txt
+└── Makefile                # Compilación
 ```
 
 ## Requisitos

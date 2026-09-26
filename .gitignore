@@ -1,2 +1,6 @@
 data/
 build/
+python/.venv/
+python/plots/
+python/results_experimental.csv
+T1.pdf
