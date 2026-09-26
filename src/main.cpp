@@ -11,7 +11,7 @@
 #ifdef _GLIBCXX_DEBUG
 static constexpr int REPETITIONS = 3;
 #else
-static constexpr int REPETITIONS = 4;
+static constexpr int REPETITIONS = 10;
 #endif
 
 // Función auxiliar para ejecutar varias repeticiones de una configuración y promediar
@@ -30,8 +30,13 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
     
     for (int rep = 0; rep < REPETITIONS; rep++) {
         // Generar un grafo nuevo y distinto en cada repetición
+        std::cout << "\n  [Rep " << rep << "] Generando grafo... " << std::flush;
         Graph graph(v, e);
+        
+        std::cout << "Listo. Binomial... " << std::flush;
         MST mstBinomial = PrimAlgorithm::primBinomial(graph);
+
+        std::cout << "Listo. Fibonacci... " << std::flush;
         MST mstFibonacci = PrimAlgorithm::primFibonacci(graph);
         
         // Verificar que el peso del MST sea igual en ambas implementaciones
@@ -44,7 +49,7 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
         totalOpsBinomial += mstBinomial.numOperations;
         totalOpsFibonacci += mstFibonacci.numOperations;
         
-        std::cout << "." << std::flush;
+        std::cout << "OK." << std::flush;
     }
     
     // Calcular promedios

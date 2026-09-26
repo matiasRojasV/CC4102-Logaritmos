@@ -99,14 +99,19 @@ void BinomialHeap::consolidate() {
 void BinomialHeap::insert(int key, double priority) {
     Node* newNode = new Node(key, priority);
     
-    if (key < (int)nodeMap.size()) {
-        nodeMap[key] = newNode;
-    } else {
-        nodeMap.resize(key + 1);
-        nodeMap[key] = newNode;
+    newNode->parent = nullptr;
+    newNode->child = nullptr;
+    newNode->degree = 0;
+
+    if (key >= (int)nodeMap.size()) {
+        int newSize = std::max(key + 1, (int)nodeMap.size() * 2 + 1);
+        nodeMap.resize(newSize, nullptr);
     }
     
-    head = merge(head, newNode);
+    nodeMap[key] = newNode;
+
+    newNode->sibling = head;
+    head = newNode;
     size++;
 }
 
@@ -181,13 +186,13 @@ int BinomialHeap::extractMin() {
 
 void BinomialHeap::decreaseKey(int key, double newPriority) {
     if (key < 0 || key >= (int)nodeMap.size() || !nodeMap[key]) {
-        throw std::out_of_range("Key not found in heap");
+        return; 
     }
     
     Node* node = nodeMap[key];
     
-    if (newPriority > node->priority) {
-        throw std::invalid_argument("New priority must be less than current priority");
+    if (newPriority >= node->priority) {
+        return; // Ignorar si la prioridad no mejora
     }
     
     node->priority = newPriority;
@@ -195,19 +200,15 @@ void BinomialHeap::decreaseKey(int key, double newPriority) {
     
     // Bubble up si es necesario
     while (node->parent && node->priority < node->parent->priority) {
-        // CORRECCIÓN: Usar 'key' en lugar de 'vertex'
         std::swap(node->key, node->parent->key);
         std::swap(node->priority, node->parent->priority);
         
-        // Actualizar el mapa de acceso rápido (crucial para tu implementación)
         nodeMap[node->key] = node;
         nodeMap[node->parent->key] = node->parent;
         
         node = node->parent;
-        swaps++; // Contabilizar operación estructural
+        swaps++; 
     }
-    
-    // Guardar métricas
     swapsHistory.push_back(swaps);
 }
 
