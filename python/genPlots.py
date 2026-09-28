@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Crear directorio de salida
+# directorio de salida
 output_dir = "plots"
 os.makedirs(output_dir, exist_ok=True)
 
-# Configuración estética general
+# Config estetica
 plt.rcParams.update({
     'font.sans-serif': 'DejaVu Sans',
     'axes.edgecolor': '#333333',
@@ -21,7 +21,7 @@ plt.rcParams.update({
 # Cargar datos
 df = pd.read_csv("results_experimental.csv")
 
-# Funciones de Cotas Teóricas
+# Funciones de Cotas Teoricas
 def theoretical_binomial(v, e):
     return e * np.log2(v)
 
@@ -45,14 +45,14 @@ for serie_name in ["Serie A", "Serie B"]:
     time_bin = sub_df["TimeBinomial"].values
     time_fib = sub_df["TimeFibonacci"].values
     
-    # Cotas Teóricas
+    # Cotas Teoricas
     theory_bin = theoretical_binomial(v_vals, e_vals)
     theory_fib = theoretical_fibonacci(v_vals, e_vals)
     
     c_bin = fit_constant(time_bin, theory_bin)
     c_fib = fit_constant(time_fib, theory_fib)
     
-    # Mismo límite Y para poder comparar ambas estructuras
+    # Mismo limite Y para poder comparar ambas estructuras
     y_max = max(np.max(time_bin), np.max(time_fib)) * 1.1
     y_min = 0
 
@@ -101,7 +101,7 @@ for serie_name in ["Serie C", "Serie D"]:
     theory_bin = theoretical_binomial(v_vals, e_vals)
     theory_fib = theoretical_fibonacci(v_vals, e_vals)
     
-    # Escalas unificadas para pares de gráficos
+    # Escalas unificadas para pares de graficos
     max_t = max(np.max(t_bin), np.max(t_fib)) * 1.1
     max_ops = max(np.max(ops_bin), np.max(ops_fib)) * 1.1
 

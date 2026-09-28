@@ -6,7 +6,7 @@
 #include <random>
 #include <unordered_set>
 
-// Función hash personalizada para pares de enteros
+// Función hash para pares de enteros
 struct EdgeHash {
     std::size_t operator()(const std::pair<int, int>& p) const {
         auto h1 = std::hash<int>{}(p.first);
@@ -18,13 +18,13 @@ struct EdgeHash {
 
 /**
  * @class Graph
- * @brief Generador y estructura de grafo con listas de adyacencia.
+ * @brief Generador y estructura de grafo con listas de adyacencia
  */
 class Graph {
 private:
     int numVertices;
     int numEdges;
-    // Lista de adyacencia: adj[u] = {(v, weight), ...}
+    // Lista de adyacencia
     std::vector<std::vector<std::pair<int, double>>> adj;
     
 public:
@@ -36,4 +36,4 @@ public:
     void printGraph() const;
 };
 
-#endif // GRAPH_H
+#endif

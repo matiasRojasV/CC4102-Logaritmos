@@ -7,16 +7,16 @@
 
 /**
  * @class BinomialHeap
- * @brief Implementación de una cola binomial de mínimo.
+ * @brief Implementación de una cola binomial de mínimo
  * 
  * Estructura de datos que mantiene un mínimo en tiempo O(1) amortizado
- * y permite operaciones de extractMin en O(log n).
+ * y permite operaciones de extractMin en O(log n)
  */
 class BinomialHeap {
 private:
     struct Node {
-        int key;           // Valor de la clave (identificador del vértice)
-        double priority;   // Valor de prioridad (peso)
+        int key;           // Valor de la clave
+        double priority;   // Valor de prioridades
         int degree;        // Grado del nodo
         Node* parent;      // Puntero al padre
         Node* child;       // Puntero al hijo más a la izquierda
@@ -27,29 +27,29 @@ private:
               child(nullptr), sibling(nullptr) {}
     };
     
-    Node* head;  // Cabeza de la lista de raíces
-    int size;    // Número de elementos
+    Node* head;  // Cabeza de la lista de raices
+    int size;    // Numero de elementos
     
-    // Mapa para acceso rápido a nodos por clave
+    // Mapa para acceso rapido a nodos por clave
     std::vector<Node*> nodeMap;
     
     /**
-     * Liga dos árboles binomiales.
+     * Linkea dos árboles binomiales
      */
     Node* linkTrees(Node* tree1, Node* tree2);
     
     /**
-     * Merge de dos listas de raíces.
+     * Merge de dos listas de raices
      */
     Node* merge(Node* h1, Node* h2);
     
     /**
-     * Consolida la estructura después de operaciones.
+     * Consolida la estructura despues de operaciones
      */
     void consolidate();
     
     /**
-     * Libera toda la memoria del heap.
+     * Libera toda la memoria del heap
      */
     void deleteAll(Node* node);
     
@@ -57,71 +57,61 @@ public:
     std::vector<int> swapsHistory;
     std::vector<long long> timeHistory;
     /**
-     * Constructor que crea una cola binomial vacía.
+     * Constructor que crea una cola binomial vacia
      */
     BinomialHeap();
     
     /**
-     * Constructor que inicializa el heap con un vector de prioridades.
-     * 
+     * Constructor que inicializa el heap con un vector de prioridades
      * @param priorities Vector de pares (clave, prioridad)
-     * 
-     * Nota: Este constructor debe ser O(n) para heapify.
      */
     BinomialHeap(const std::vector<std::pair<int, double>>& priorities);
     
     /**
-     * Destructor.
+     * Destructor
      */
     ~BinomialHeap();
     
     /**
-     * Inserta un elemento con clave y prioridad.
+     * Inserta un elemento con clave y prioridad
      * 
      * @param key Identificador del elemento
      * @param priority Valor de prioridad
-     * 
      * Tiempo: O(log n) amortizado
      */
     void insert(int key, double priority);
     
     /**
-     * Retorna la clave con mínima prioridad sin extraerla.
-     * 
-     * @return Clave del mínimo, o -1 si está vacío
-     * 
+     * Retorna la clave con min prioridad sin extraerla
+     * @return Clave del minimo, o -1 si está vacío
      * Tiempo: O(1) amortizado
      */
     int findMin() const;
     
     /**
-     * Extrae y retorna la clave con mínima prioridad.
-     * 
-     * @return Clave del mínimo, o -1 si está vacío
-     * 
+     * Extrae y retorna la clave con min prioridad
+     * @return Clave del minimo, o -1 si este vacio
      * Tiempo: O(log n)
      */
     int extractMin();
     
     /**
-     * Disminuye la prioridad de un elemento.
-     * 
+     * Disminuye la prioridad de un elemento
      * @param key Identificador del elemento
-     * @param newPriority Nueva prioridad (debe ser menor)
-     * 
+     * @param newPriority Nueva prioridad
      * Tiempo: O(log n)
      */
     void decreaseKey(int key, double newPriority);
     
     /**
-     * Retorna el tamaño del heap.
+     * Retorna el tamaño del heap
      */
     int getSize() const;
     
     /**
-     * Verifica si el heap está vacío.
+     * Verifica si el heap esta vacio
      */
     bool isEmpty() const;
 };
 
-#endif // BINOMIAL_HEAP_H
+#endif

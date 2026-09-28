@@ -9,7 +9,7 @@
 
 /**
  * @struct MST
- * @brief Resultado del algoritmo de Prim (Minimum Spanning Tree).
+ * @brief Resultado del algoritmo de Prim
  */
 struct MST {
     std::vector<int> opsHistory; 
@@ -17,43 +17,38 @@ struct MST {
     std::vector<std::pair<int, int>> edges;  // Aristas del MST
     double totalWeight = 0.0;                // Peso total
     long long numOperations = 0;             // Número de operaciones realizadas
-    double executionTime = 0.0;                // Tiempo de ejecución
+    double executionTime = 0.0;              // Tiempo
 };
 
 /**
  * @class PrimAlgorithm
- * @brief Implementación del algoritmo de Prim con diferentes colas de prioridad.
+ * @brief Implementación del algoritmo de Prim con diferentes colas de prioridad
  */
 class PrimAlgorithm {
 public:
     /**
-     * Ejecuta el algoritmo de Prim usando una cola binomial.
-     * 
+     * Ejecuta el algoritmo de Prim usando una cola binomial
      * @param graph Grafo de entrada
      * @return Estructura MST con el árbol generador mínimo
-     * 
      * Complejidad: O(e log v)
      */
     static MST primBinomial(const Graph& graph);
     
     /**
-     * Ejecuta el algoritmo de Prim usando una cola de Fibonacci.
-     * 
+     * Ejecuta el algoritmo de Prim usando una cola de Fibonacci
      * @param graph Grafo de entrada
      * @return Estructura MST con el árbol generador mínimo
-     * 
      * Complejidad: O(e + v log v)
      */
     static MST primFibonacci(const Graph& graph);
     
     /**
-     * Verifica que dos MST tengan el mismo peso.
-     * 
+     * Verifica que dos MST tengan el mismo peso
      * @param mst1 Primer MST
      * @param mst2 Segundo MST
-     * @return true si tienen el mismo peso (dentro de tolerancia numérica)
+     * @return true si tienen el mismo peso
      */
     static bool verifyMST(const MST& mst1, const MST& mst2);
 };
 
-#endif // PRIM_ALGORITHM_H
+#endif

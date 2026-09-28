@@ -43,7 +43,7 @@ Graph::Graph(int v, int e) : numVertices(v), numEdges(0) {
         int u = vertexDist(gen);
         int v_node = vertexDist(gen);
         
-        if (u == v_node) continue; // Evitar reflexivas
+        if (u == v_node) continue;
         
         int min_node = std::min(u, v_node);
         int max_node = std::max(u, v_node);

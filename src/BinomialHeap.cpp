@@ -136,7 +136,7 @@ int BinomialHeap::findMin() const {
 int BinomialHeap::extractMin() {
     if (!head) return -1;
     
-    // Encontrar el nodo con mínima prioridad
+    // Encontrar el nodo con min prior
     Node* minNode = head;
     Node* prev = nullptr;
     Node* current = head;
@@ -151,7 +151,7 @@ int BinomialHeap::extractMin() {
         current = current->sibling;
     }
     
-    // Desenlazar minNode de la lista de raíces
+    // Desenlazar minNode de la lista de raices
     if (prev) {
         prev->sibling = minNode->sibling;
     } else {
@@ -160,7 +160,7 @@ int BinomialHeap::extractMin() {
     
     // Merge de los hijos de minNode con la lista restante
     Node* childList = minNode->child;
-    // Invertir la lista dparae hijos
+    // Invertir la lista de hijos
     Node* reversed = nullptr;
     while (childList) {
         Node* next = childList->sibling;
@@ -192,7 +192,7 @@ void BinomialHeap::decreaseKey(int key, double newPriority) {
     Node* node = nodeMap[key];
     
     if (newPriority >= node->priority) {
-        return; // Ignorar si la prioridad no mejora
+        return; // Ignorar si la prior no mejora
     }
     
     node->priority = newPriority;

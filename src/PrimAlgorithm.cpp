@@ -22,7 +22,7 @@ MST PrimAlgorithm::primBinomial(const Graph& graph) {
     BinomialHeap pq;
     pq.swapsHistory.reserve(e);
     
-    // Comenzar desde el vértice 0
+    // Comenzar desde el vertice 0
     key[0] = 0.0;
     for (int i = 0; i < v; i++) {
         pq.insert(i, key[i]);
@@ -55,7 +55,7 @@ MST PrimAlgorithm::primBinomial(const Graph& graph) {
     auto endTime = std::chrono::high_resolution_clock::now();
     result.executionTime = std::chrono::duration<double>(endTime - startTime).count();
     
-    // Transferencia eficiente de métricas (se transfieren los recursos en O(1) con std::move)
+    // Transferencia eficiente de metricas
     result.opsHistory = std::move(pq.swapsHistory);
     result.timeHistory = std::move(pq.timeHistory);
 
@@ -73,7 +73,7 @@ MST PrimAlgorithm::primFibonacci(const Graph& graph) {
     
     auto startTime = std::chrono::high_resolution_clock::now();
     
-    // Inicializar distancias
+    // Init distancias
     std::vector<double> key(v, std::numeric_limits<double>::infinity());
     std::vector<bool> inMST(v, false);
     std::vector<int> parent(v, -1);
@@ -81,7 +81,7 @@ MST PrimAlgorithm::primFibonacci(const Graph& graph) {
     FibonacciHeap pq;
     pq.cutsHistory.reserve(e);
     
-    // Comenzar desde el vértice 0
+    // Comenzar desde el vertice 0
     key[0] = 0.0;
     for (int i = 0; i < v; i++) {
         pq.insert(i, key[i]);

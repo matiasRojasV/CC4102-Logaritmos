@@ -144,19 +144,19 @@ int FibonacciHeap::extractMin() {
     Node* oldMin = minNode;
     int key = oldMin->key;
     
-    // Promover todos los hijos del mínimo a raíces de forma segura
+    // Promover todos los hijos del min a raíces de forma segura
     if (oldMin->child) {
         Node* child = oldMin->child;
         std::vector<Node*> children;
         
-        // Guardamos los punteros primero para no romper el ciclo al modificar left/right
+        // Guardamos los punteros 1ro para no romper el ciclo al modificar left/right
         Node* current = child;
         do {
             children.push_back(current);
             current = current->right;
         } while (current != child);
         
-        // Los insertamos uno por uno en la lista de raíces
+        // Los insertamos uno por uno en la lista de raices
         for (Node* c : children) {
             c->parent = nullptr;
             c->left = c;
@@ -165,14 +165,14 @@ int FibonacciHeap::extractMin() {
         }
     }
     
-    // Remover explícitamente a oldMin de la lista de raíces
+    // Remover explícitamente a oldMin de la lista de raices
     removeFromList(oldMin);
     
     // Ajustar minNode y consolidar
     if (oldMin == oldMin->right) {
-        minNode = nullptr; // Era el único nodo en todo el heap
+        minNode = nullptr;
     } else {
-        minNode = oldMin->right; // Apunte temporal, consolidate se encarga de hallar el verdadero mínimo
+        minNode = oldMin->right;
         consolidate();
     }
     
@@ -202,7 +202,7 @@ void FibonacciHeap::cut(Node* node) {
     node->marked = false;
     
     insertIntoRootList(node);
-    currentCuts++; // Contabilizar cada corte realizado (directo o en cascada)
+    currentCuts++; // Contabilizar cada corte realizado
 }
 
 void FibonacciHeap::cascadingCut(Node* node) {
@@ -219,7 +219,6 @@ void FibonacciHeap::cascadingCut(Node* node) {
 }
 
 void FibonacciHeap::decreaseKey(int key, double newPriority) {
-    // Escudo defensivo
     if (key < 0 || key >= (int)nodeMap.size() || !nodeMap[key]) {
         return; 
     }
@@ -227,7 +226,7 @@ void FibonacciHeap::decreaseKey(int key, double newPriority) {
     Node* node = nodeMap[key];
     
     if (newPriority >= node->priority) {
-        return; // Ignorar si la prioridad no mejora
+        return;
     }
     
     currentCuts = 0; 

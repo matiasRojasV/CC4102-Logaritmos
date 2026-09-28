@@ -14,7 +14,7 @@ static constexpr int REPETITIONS = 3;
 static constexpr int REPETITIONS = 10;
 #endif
 
-// Función auxiliar para ejecutar varias repeticiones de una configuración y promediar
+// Función para ejecutar varias repeticiones de una configuración y promediar
 void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream& outfile) {
     int v = 1 << i; // v = 2^i
     int e = 1 << j; // e = 2^j
@@ -52,7 +52,7 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
         std::cout << "OK." << std::flush;
     }
     
-    // Calcular promedios
+    // Cal promedios
     double avgTimeBinomial = totalTimeBinomial / REPETITIONS;
     double avgTimeFibonacci = totalTimeFibonacci / REPETITIONS;
     long long avgOpsBinomial = totalOpsBinomial / REPETITIONS;
@@ -74,7 +74,7 @@ void ejecutarConfiguracion(int i, int j, const std::string& serie, std::ofstream
 }
 
 int main() {
-    std::cout << "=== Tarea 1: Algoritmo de Prim y Análisis Amortizado ===" << std::endl;
+    std::cout << "Tarea 1: Algoritmo de Prim y Análisis Amortizado" << std::endl;
     std::cout << "Iniciando batería de experimentos...\n" << std::endl;
     
     std::ofstream outfile("results_experimental.csv");
@@ -83,10 +83,6 @@ int main() {
     } else {
         std::cerr << "Error: No se pudo crear el archivo de resultados CSV." << std::endl;
     }
-
-    // ---------------------------------------------------------
-    // 6.3.1. Costo total
-    // ---------------------------------------------------------
 
     // En debug usamos grafos más pequeños para testear más rápido.
 #ifdef _GLIBCXX_DEBUG
@@ -105,10 +101,6 @@ int main() {
     for (int i : i_B) {
         ejecutarConfiguracion(i, j_B, "Serie B", outfile);
     }
-
-    // ---------------------------------------------------------
-    // 6.3.2. Costo amortizado
-    // ---------------------------------------------------------
 
     // Serie C: v fijo pequeño, variando e
     std::cout << "--- Iniciando Serie C ---" << std::endl;
@@ -142,10 +134,6 @@ int main() {
     for (int i : i_B) {
         ejecutarConfiguracion(i, j_B, "Serie B", outfile);
     }
-
-    // ---------------------------------------------------------
-    // 6.3.2. Costo amortizado
-    // ---------------------------------------------------------
 
     // Serie C: v fijo (i=18), variando e (j entre 18 y 22)
     std::cout << "--- Iniciando Serie C ---" << std::endl;
