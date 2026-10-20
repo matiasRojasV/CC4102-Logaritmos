@@ -164,7 +164,6 @@ private:
     }
 
     void addChild(int parentIndex, int position, std::int32_t separator, int rightChild) {
-        // Acceso directo por índice en lugar de Node& parent
         if (nodes_[parentIndex].keyCount < static_cast<int>(C)) {
             for (int i = nodes_[parentIndex].keyCount; i > position; --i) {
                 nodes_[parentIndex].keys[i] = nodes_[parentIndex].keys[i - 1];
@@ -179,8 +178,7 @@ private:
         const int grand = parentOf(parentIndex);
         if (grand < 0) {
             const int leftParent = static_cast<int>(nodes_.size());
-            // Creamos una copia explícita antes del push_back por seguridad
-            Node parentCopy = nodes_[parentIndex]; 
+            Node parentCopy = nodes_[parentIndex];
             nodes_.push_back(parentCopy);
             
             const std::int32_t middleKey = nodes_[leftParent].keys[nodes_[leftParent].keyCount / 2];
@@ -194,21 +192,23 @@ private:
             newRoot.children[1] = rightParent;
             nodes_[0] = newRoot;
             
-            parentIndex = childPosition(nodes_[0], separator) == 0 ? leftParent : rightParent;
+            // CORRECCIÓN CRÍTICA: Comparar contra middleKey
+            parentIndex = separator < middleKey ? leftParent : rightParent;
         } else {
             const std::int32_t middleKey = nodes_[parentIndex].keys[nodes_[parentIndex].keyCount / 2];
             const int rightParent = splitInternal(parentIndex);
             const int parentPosition = childPosition(nodes_[grand], middleKey);
             
             addChild(grand, parentPosition, middleKey, rightParent);
-            parentIndex = childPosition(nodes_[parentIndex], separator) == 0
-                              ? parentIndex : rightParent;
+            
+            // CORRECCIÓN CRÍTICA: Comparar contra middleKey
+            parentIndex = separator < middleKey ? parentIndex : rightParent;
         }
         
-        // Eliminada la referencia Node& destination
         const int newPosition = childPosition(nodes_[parentIndex], separator);
         addChild(parentIndex, newPosition, separator, rightChild);
     }
+    
 
     void deliver(int parentIndex, std::vector<Pair> values) {
         if (values.empty()) return;
