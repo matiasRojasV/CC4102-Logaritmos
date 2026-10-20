@@ -96,11 +96,17 @@ private:
     }
 
     int parentOf(int child) const {
-        for (int i = 0; i < static_cast<int>(nodes_.size()); ++i)
-            if (i != child)
-            for (int j = 0; j <= nodes_[i].keyCount; ++j)
-                if (nodes_[i].children[j] == child && nodes_[i].isInternal)
-                    return i;
+        return findParent(0, child);
+    }
+
+    int findParent(int current, int child) const {
+        if (!nodes_[current].isInternal) return -1;
+        for (int i = 0; i <= nodes_[current].keyCount; ++i) {
+            const int candidate = nodes_[current].children[i];
+            if (candidate == child) return current;
+            const int parent = findParent(candidate, child);
+            if (parent >= 0) return parent;
+        }
         return -1;
     }
 
@@ -163,27 +169,34 @@ private:
         return static_cast<int>(nodes_.size() - 1);
     }
 
+    void insertChildNonFull(int parentIndex, int position,
+                            std::int32_t separator, int rightChild) {
+        Node& parent = nodes_[parentIndex];
+        for (int i = parent.keyCount; i > position; --i) {
+            parent.keys[i] = parent.keys[i - 1];
+            parent.children[i + 1] = parent.children[i];
+        }
+        parent.keys[position] = separator;
+        parent.children[position + 1] = rightChild;
+        ++parent.keyCount;
+    }
+
     void addChild(int parentIndex, int position, std::int32_t separator, int rightChild) {
         if (nodes_[parentIndex].keyCount < static_cast<int>(C)) {
-            for (int i = nodes_[parentIndex].keyCount; i > position; --i) {
-                nodes_[parentIndex].keys[i] = nodes_[parentIndex].keys[i - 1];
-                nodes_[parentIndex].children[i + 1] = nodes_[parentIndex].children[i];
-            }
-            nodes_[parentIndex].keys[position] = separator;
-            nodes_[parentIndex].children[position + 1] = rightChild;
-            ++nodes_[parentIndex].keyCount;
+            insertChildNonFull(parentIndex, position, separator, rightChild);
             return;
         }
 
-        const int grand = parentOf(parentIndex);
-        if (grand < 0) {
-            const int leftParent = static_cast<int>(nodes_.size());
-            Node parentCopy = nodes_[parentIndex];
-            nodes_.push_back(parentCopy);
-            
-            const std::int32_t middleKey = nodes_[leftParent].keys[nodes_[leftParent].keyCount / 2];
-            const int rightParent = splitInternal(leftParent);
-            
+        const int middle = nodes_[parentIndex].keyCount / 2;
+        const std::int32_t middleKey = nodes_[parentIndex].keys[middle];
+        int leftParent = parentIndex;
+        int rightParent;
+
+        if (parentIndex == 0) {
+            leftParent = static_cast<int>(nodes_.size());
+            nodes_.push_back(nodes_[0]);
+            rightParent = splitInternal(leftParent);
+
             Node newRoot;
             newRoot.isInternal = 1;
             newRoot.keyCount = 1;
@@ -191,22 +204,20 @@ private:
             newRoot.children[0] = leftParent;
             newRoot.children[1] = rightParent;
             nodes_[0] = newRoot;
-            
-            // CORRECCIÓN CRÍTICA: Comparar contra middleKey
-            parentIndex = separator < middleKey ? leftParent : rightParent;
+
+            parentIndex = separator <= middleKey ? leftParent : rightParent;
         } else {
-            const std::int32_t middleKey = nodes_[parentIndex].keys[nodes_[parentIndex].keyCount / 2];
             const int rightParent = splitInternal(parentIndex);
+            const int grand = parentOf(parentIndex);
+            if (grand < 0)
+                throw std::logic_error("Nodo interno sin padre");
             const int parentPosition = childPosition(nodes_[grand], middleKey);
-            
             addChild(grand, parentPosition, middleKey, rightParent);
-            
-            // CORRECCIÓN CRÍTICA: Comparar contra middleKey
-            parentIndex = separator < middleKey ? parentIndex : rightParent;
+            parentIndex = separator <= middleKey ? parentIndex : rightParent;
         }
-        
-        const int newPosition = childPosition(nodes_[parentIndex], separator);
-        addChild(parentIndex, newPosition, separator, rightChild);
+
+        insertChildNonFull(parentIndex, childPosition(nodes_[parentIndex], separator),
+                           separator, rightChild);
     }
     
 
@@ -224,11 +235,27 @@ private:
         }
 
         if (!nodes_[childIndex].isInternal) {
-            const int right = splitLeaf(childIndex);
-            const std::int32_t separator =
-                nodes_[childIndex].buffer[nodes_[childIndex].bufferCount - 1].first;
+            std::vector<Pair> merged;
+            merged.reserve(nodes_[childIndex].bufferCount + values.size());
+            for (int i = 0; i < nodes_[childIndex].bufferCount; ++i)
+                merged.push_back(nodes_[childIndex].buffer[i]);
+            merged.insert(merged.end(), values.begin(), values.end());
+            std::stable_sort(merged.begin(), merged.end(),
+                             [](const Pair& a, const Pair& b) { return a.first < b.first; });
+
+            const int middle = static_cast<int>(merged.size() / 2);
+            Node rightNode;
+            nodes_[childIndex].bufferCount = middle;
+            for (int i = 0; i < middle; ++i)
+                nodes_[childIndex].buffer[i] = merged[i];
+            rightNode.bufferCount = static_cast<int>(merged.size()) - middle;
+            for (int i = 0; i < rightNode.bufferCount; ++i)
+                rightNode.buffer[i] = merged[middle + i];
+            nodes_.push_back(rightNode);
+            const int right = static_cast<int>(nodes_.size() - 1);
+            const std::int32_t separator = nodes_[childIndex].buffer[middle - 1].first;
+            ++counters_.writes;
             addChild(parentIndex, position, separator, right);
-            deliver(parentIndex, std::move(values));
             return;
         }
 

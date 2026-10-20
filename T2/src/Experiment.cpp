@@ -35,6 +35,7 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
 
         // --- ARBOL B ---
         {
+            std::cout << "  [BTree] construyendo..." << std::flush;
             BTree btree;
             auto t0 = std::chrono::high_resolution_clock::now();
             for (const auto& item : data) btree.insert(item);
@@ -62,10 +63,12 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
             csv << N << ",BTree," << buildTime << "," << btree.insertionReads() << ","
                 << btree.insertionWrites() << "," << btree.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
+            std::cout << " listo (" << btree.size() << " nodos)\n";
         }
 
         // --- ARBOL B^eps (0.25) ---
         {
+            std::cout << "  [Beps025] construyendo..." << std::flush;
             BTreeEpsilon<4, 506> eps25(0.5);
             auto t0 = std::chrono::high_resolution_clock::now();
             for (const auto& item : data) eps25.insert(item);
@@ -93,10 +96,12 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
             csv << N << ",Beps025," << buildTime << "," << eps25.insertionReads() << ","
                 << eps25.insertionWrites() << "," << eps25.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
+            std::cout << " listo (" << eps25.size() << " nodos)\n";
         }
 
         // --- ARBOL B^eps (0.75) ---
         {
+            std::cout << "  [Beps075] construyendo..." << std::flush;
             BTreeEpsilon<126, 384> eps75(0.5);
             auto t0 = std::chrono::high_resolution_clock::now();
             for (const auto& item : data) eps75.insert(item);
@@ -124,6 +129,7 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
             csv << N << ",Beps075," << buildTime << "," << eps75.insertionReads() << ","
                 << eps75.insertionWrites() << "," << eps75.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
+            std::cout << " listo (" << eps75.size() << " nodos)\n";
         }
     }
     csv.close();
