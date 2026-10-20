@@ -94,6 +94,85 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
                 << eps25.insertionWrites() << "," << eps25.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
         }
+
+        // --- ARBOL B^eps (0.75) ---
+        {
+            BTreeEpsilon<126, 384> eps75(0.5);
+            auto t0 = std::chrono::high_resolution_clock::now();
+            for (const auto& item : data) eps75.insert(item);
+            auto t1 = std::chrono::high_resolution_clock::now();
+            double buildTime = std::chrono::duration<double>(t1 - t0).count();
+
+            std::string path = outputDir + "/beps075.bin";
+            eps75.writeToDisk(path);
+
+            double totalSearchTime = 0;
+            std::uint64_t totalReads = 0;
+
+            for (int q = 0; q < 50; ++q) {
+                std::int32_t l = dist(rng);
+                std::int32_t u = l + 604800;
+
+                auto st0 = std::chrono::high_resolution_clock::now();
+                auto res = eps75.rangeSearch(l, u, path);
+                auto st1 = std::chrono::high_resolution_clock::now();
+
+                totalSearchTime += std::chrono::duration<double>(st1 - st0).count();
+                totalReads += eps75.searchReads();
+            }
+
+            csv << N << ",Beps075," << buildTime << "," << eps75.insertionReads() << ","
+                << eps75.insertionWrites() << "," << eps75.size() << ","
+                << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
+        }
     }
     csv.close();
+}
+
+void runAlphaBonus(const std::string& dataFile, const std::string& outputDir) {
+    constexpr std::size_t N = 1ULL << 24;
+    const auto data = readBinaryData(dataFile, N);
+    if (data.size() < N)
+        throw std::runtime_error("No hay suficientes datos para el experimento de alpha");
+
+    std::ofstream csv(outputDir + "/alpha_bonus_results.csv");
+    if (!csv)
+        throw std::runtime_error("No se pudo crear el archivo de resultados de alpha");
+    csv << "N,Alpha,BuildTime,RAM_Reads,RAM_Writes,NumNodes,AvgSearchTime,AvgDiskReads\n";
+
+    std::mt19937 rng(4242);
+    std::uniform_int_distribution<std::int32_t> dist(
+        1546300800, 1754006400 - 604800);
+
+    for (int alphaIndex = 1; alphaIndex <= 8; ++alphaIndex) {
+        const double alpha = alphaIndex / 10.0;
+        BTreeEpsilon<4, 506> tree(alpha);
+
+        auto t0 = std::chrono::high_resolution_clock::now();
+        for (const auto& item : data) tree.insert(item);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        const double buildTime = std::chrono::duration<double>(t1 - t0).count();
+
+        const std::string path = outputDir + "/beps_alpha.bin";
+        tree.writeToDisk(path);
+
+        double totalSearchTime = 0;
+        std::uint64_t totalReads = 0;
+        for (int q = 0; q < 20; ++q) {
+            const std::int32_t lower = dist(rng);
+            const std::int32_t upper = lower + 604800;
+
+            auto st0 = std::chrono::high_resolution_clock::now();
+            auto result = tree.rangeSearch(lower, upper, path);
+            auto st1 = std::chrono::high_resolution_clock::now();
+
+            totalSearchTime += std::chrono::duration<double>(st1 - st0).count();
+            totalReads += tree.searchReads();
+        }
+
+        csv << N << "," << alpha << "," << buildTime << ","
+            << tree.insertionReads() << "," << tree.insertionWrites() << ","
+            << tree.size() << "," << (totalSearchTime / 20.0) << ","
+            << (totalReads / 20.0) << "\n";
+    }
 }

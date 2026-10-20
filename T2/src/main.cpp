@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
     try {
         std::cout << "Iniciando experimentos Tarea 2...\n";
         runExperiments(dataFile, outputDir);
+        std::cout << "Iniciando experimento adicional de alpha...\n";
+        runAlphaBonus(dataFile, outputDir);
         std::cout << "Experimentos completados exitosamente.\n";
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
