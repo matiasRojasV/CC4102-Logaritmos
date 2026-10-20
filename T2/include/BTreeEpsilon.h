@@ -164,24 +164,28 @@ private:
     }
 
     void addChild(int parentIndex, int position, std::int32_t separator, int rightChild) {
-        Node& parent = nodes_[parentIndex];
-        if (parent.keyCount < static_cast<int>(C)) {
-            for (int i = parent.keyCount; i > position; --i) {
-                parent.keys[i] = parent.keys[i - 1];
-                parent.children[i + 1] = parent.children[i];
+        // Acceso directo por índice en lugar de Node& parent
+        if (nodes_[parentIndex].keyCount < static_cast<int>(C)) {
+            for (int i = nodes_[parentIndex].keyCount; i > position; --i) {
+                nodes_[parentIndex].keys[i] = nodes_[parentIndex].keys[i - 1];
+                nodes_[parentIndex].children[i + 1] = nodes_[parentIndex].children[i];
             }
-            parent.keys[position] = separator;
-            parent.children[position + 1] = rightChild;
-            ++parent.keyCount;
+            nodes_[parentIndex].keys[position] = separator;
+            nodes_[parentIndex].children[position + 1] = rightChild;
+            ++nodes_[parentIndex].keyCount;
             return;
         }
 
         const int grand = parentOf(parentIndex);
         if (grand < 0) {
             const int leftParent = static_cast<int>(nodes_.size());
-            nodes_.push_back(parent);
+            // Creamos una copia explícita antes del push_back por seguridad
+            Node parentCopy = nodes_[parentIndex]; 
+            nodes_.push_back(parentCopy);
+            
             const std::int32_t middleKey = nodes_[leftParent].keys[nodes_[leftParent].keyCount / 2];
             const int rightParent = splitInternal(leftParent);
+            
             Node newRoot;
             newRoot.isInternal = 1;
             newRoot.keyCount = 1;
@@ -189,32 +193,37 @@ private:
             newRoot.children[0] = leftParent;
             newRoot.children[1] = rightParent;
             nodes_[0] = newRoot;
+            
             parentIndex = childPosition(nodes_[0], separator) == 0 ? leftParent : rightParent;
         } else {
-            const std::int32_t middleKey = parent.keys[parent.keyCount / 2];
+            const std::int32_t middleKey = nodes_[parentIndex].keys[nodes_[parentIndex].keyCount / 2];
             const int rightParent = splitInternal(parentIndex);
             const int parentPosition = childPosition(nodes_[grand], middleKey);
+            
             addChild(grand, parentPosition, middleKey, rightParent);
             parentIndex = childPosition(nodes_[parentIndex], separator) == 0
                               ? parentIndex : rightParent;
         }
-        Node& destination = nodes_[parentIndex];
-        const int newPosition = childPosition(destination, separator);
+        
+        // Eliminada la referencia Node& destination
+        const int newPosition = childPosition(nodes_[parentIndex], separator);
         addChild(parentIndex, newPosition, separator, rightChild);
     }
 
     void deliver(int parentIndex, std::vector<Pair> values) {
         if (values.empty()) return;
+        
         int position = childPosition(nodes_[parentIndex], values.front().first);
         int childIndex = nodes_[parentIndex].children[position];
-        Node& child = nodes_[childIndex];
-        if (child.bufferCount + static_cast<int>(values.size()) <= static_cast<int>(LMAX)) {
-            insertSorted(child, values);
+        
+        // Se accede directamente mediante nodes_[childIndex] en lugar de crear una referencia
+        if (nodes_[childIndex].bufferCount + static_cast<int>(values.size()) <= static_cast<int>(LMAX)) {
+            insertSorted(nodes_[childIndex], values);
             ++counters_.writes;
             return;
         }
 
-        if (!child.isInternal) {
+        if (!nodes_[childIndex].isInternal) {
             const int right = splitLeaf(childIndex);
             const std::int32_t separator =
                 nodes_[childIndex].buffer[nodes_[childIndex].bufferCount - 1].first;
@@ -224,6 +233,7 @@ private:
         }
 
         flush(childIndex);
+        
         if (nodes_[childIndex].keyCount == static_cast<int>(C)) {
             const std::int32_t separator = nodes_[childIndex].keys[nodes_[childIndex].keyCount / 2];
             const int right = splitInternal(childIndex);
@@ -233,25 +243,33 @@ private:
     }
 
     void flush(int parentIndex) {
-        Node& parent = nodes_[parentIndex];
-        if (!parent.isInternal || parent.bufferCount == 0) return;
-        const int numChildren = parent.keyCount + 1;
+        if (!nodes_[parentIndex].isInternal || nodes_[parentIndex].bufferCount == 0) return;
+        
+        const int numChildren = nodes_[parentIndex].keyCount + 1;
         std::vector<std::vector<Pair>> groups(numChildren);
-        for (int i = 0; i < parent.bufferCount; ++i)
-            groups[childPosition(parent, parent.buffer[i].first)].push_back(parent.buffer[i]);
+        
+        for (int i = 0; i < nodes_[parentIndex].bufferCount; ++i) {
+            int pos = childPosition(nodes_[parentIndex], nodes_[parentIndex].buffer[i].first);
+            groups[pos].push_back(nodes_[parentIndex].buffer[i]);
+        }
 
         const int f = static_cast<int>(
-            std::ceil(static_cast<double>(parent.bufferCount) / numChildren));
+            std::ceil(static_cast<double>(nodes_[parentIndex].bufferCount) / numChildren));
         const int threshold = static_cast<int>(std::ceil(f * alpha_));
         std::vector<Pair> remaining;
-        parent.bufferCount = 0;
+        
+        nodes_[parentIndex].bufferCount = 0;
+        
         for (int i = numChildren - 1; i >= 0; --i) {
-            if (static_cast<int>(groups[i].size()) >= threshold)
-                deliver(parentIndex, std::move(groups[i]));
-            else
+            if (static_cast<int>(groups[i].size()) >= threshold) {
+                deliver(parentIndex, std::move(groups[i])); // Esto puede reasignar memoria
+            } else {
                 remaining.insert(remaining.end(), groups[i].begin(), groups[i].end());
+            }
         }
-        insertSorted(parent, remaining);
+        
+        // Se accede de forma segura mediante el índice actualizado
+        insertSorted(nodes_[parentIndex], remaining);
         ++counters_.writes;
     }
 
