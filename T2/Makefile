@@ -8,4 +8,4 @@ all:
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
 
 clean:
-	rm -f $(TARGET) *.bin
+	rm -f *.o $(filter-out datos.bin, $(wildcard *.bin)) mi_programa
