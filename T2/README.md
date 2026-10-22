@@ -1,30 +1,72 @@
 # Tarea 2: árboles B y Bε
 
+Implementación en C++ de un árbol B y dos configuraciones de árboles Bε.
+El programa permite comparar el costo de construir los árboles y realizar
+búsquedas por rango sobre datos de temperatura almacenados en memoria externa.
+
+## Requisitos
+
+- Linux, macOS o un sistema compatible.
+- `g++` con soporte para C++17.
+- `make`.
+- Un archivo de datos binario llamado `datos.bin`.
+
 ## Compilación
 
-Se requiere un compilador compatible con C++17:
+Desde esta carpeta, ejecutar:
 
-```sh
+```bash
 make
 ```
 
+Esto genera el ejecutable `T2`.
+
 ## Ejecución
 
-`datos.bin` debe contener pares consecutivos `(int32_t, float)` en formato binario.
+Ejecutar el programa indicando el archivo de datos y, opcionalmente, el
+directorio donde se guardarán los resultados:
 
-```sh
-./tarea2 datos.bin N [directorio_salida]
+```bash
+./T2 datos.bin
+./T2 datos.bin out
 ```
 
-El programa inserta los primeros `N` pares en:
+El directorio de salida debe existir antes de ejecutar el programa. Si no se
+indica, se utiliza la carpeta actual.
 
-- un árbol B con `b = 340`;
-- un árbol Bε con `c = 4`, `lmax = 506` (ε aproximadamente 0.25);
-- un árbol Bε con `c = 126`, `lmax = 384` (ε aproximadamente 0.75).
+El programa ejecuta automáticamente:
 
-Cada nodo ocupa exactamente 4096 bytes en los archivos generados. El programa
-reporta la cantidad de nodos y escrituras simuladas durante la construcción.
+- experimentos con un árbol B;
+- experimentos con árboles Bε usando las configuraciones aproximadas
+  `ε = 0.25` y `ε = 0.75`;
+- un experimento adicional variando el parámetro `α`.
 
-La interfaz de las clases también permite ejecutar búsquedas inclusivas
-`[l, u]` mediante `rangeSearch`. Las búsquedas leen los nodos directamente
-desde el archivo y actualizan el contador de lecturas de bloques.
+## Archivos generados
+
+En el directorio de salida se generan:
+
+- `experiment_results.csv`: resultados de las comparaciones principales.
+- `alpha_bonus_results.csv`: resultados del experimento con distintos valores
+  de `α`.
+- `btree.bin`, `beps025.bin` y `beps075.bin`: árboles serializados en formato
+  binario.
+
+Cada nodo ocupa un bloque de 4096 bytes. Las búsquedas por rango son inclusivas,
+es decir, consideran las llaves dentro de `[l, u]`.
+
+## Estructura del proyecto
+
+```text
+T2/
+├── include/   # Definiciones de estructuras y clases
+├── src/       # Implementación y programa principal
+├── out/       # Resultados y árboles generados
+├── Makefile   # Comandos de compilación y limpieza
+└── datos.bin  # Archivo de entrada binario
+```
+
+Para eliminar el ejecutable y los archivos binarios generados, ejecutar:
+
+```bash
+make clean
+```
