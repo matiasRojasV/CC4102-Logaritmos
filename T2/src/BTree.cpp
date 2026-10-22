@@ -2,18 +2,23 @@
 #include <algorithm>
 #include <stdexcept>
 
+
 BTree::BTree() {
     BTreeNode root;
     nodes_.push_back(root);
     counters_.writes++;
 }
 
+
+// Guarda un nodo nuevo al final del arreglo en mem
 int BTree::append(const BTreeNode& node) {
     nodes_.push_back(node);
     ++counters_.writes;
     return static_cast<int>(nodes_.size() - 1);
 }
 
+
+// Separa un nodo lleno en dos nodos y sube la llave mediana
 void BTree::splitChild(int parent, int position) {
     int oldIndex = nodes_[parent].children[position];
     BTreeNode old = nodes_[oldIndex];
@@ -53,6 +58,8 @@ void BTree::splitChild(int parent, int position) {
     ++counters_.writes;
 }
 
+
+// Inserta el valor en una hoja o desciende al hijo correspondiente
 void BTree::insertNonFull(int node, Pair value) {
     ++counters_.reads;
     if (!nodes_[node].isInternal) {
@@ -83,6 +90,8 @@ void BTree::insertNonFull(int node, Pair value) {
     insertNonFull(nodes_[node].children[position], value);
 }
 
+
+// Inserta un valor; si la raíz está llena, crea una nueva raíz
 void BTree::insert(Pair value) {
     if (nodes_[0].count == static_cast<int>(BTREE_B)) {
         BTreeNode oldRoot = nodes_[0];
@@ -99,6 +108,8 @@ void BTree::insert(Pair value) {
     insertNonFull(0, value);
 }
 
+
+// Lee un nodo desde disco y explora los subárboles relevantes
 void BTree::searchNode(std::ifstream& file, int node, std::int32_t lower,
                        std::int32_t upper, Results& result) const {
     file.seekg(static_cast<std::streamoff>(node) * BLOCK_SIZE);
@@ -116,7 +127,7 @@ void BTree::searchNode(std::ifstream& file, int node, std::int32_t lower,
 
     if (!current.isInternal) return;
 
-    // Acotar búsquedas descendentes únicamente a los subárboles que intersectan [lower, upper]
+    // Acotar busquedas descendentes únicamente a los subarboles que intersectan [lower, upper]
     for (int i = 0; i <= current.count; ++i) {
         bool explore = false;
         if (i == 0) {
@@ -133,6 +144,8 @@ void BTree::searchNode(std::ifstream& file, int node, std::int32_t lower,
     }
 }
 
+
+// Ejecuta una busqueda inclusiva y normaliza los limites si es necesario
 Results BTree::rangeSearch(std::int32_t lower, std::int32_t upper, const std::string& filename) {
     if (lower > upper) std::swap(lower, upper);
     std::ifstream file(filename, std::ios::binary);
@@ -144,6 +157,8 @@ Results BTree::rangeSearch(std::int32_t lower, std::int32_t upper, const std::st
     return result;
 }
 
+
+// Escribe los nodos en orden, usando un bloque por nodo
 void BTree::writeToDisk(const std::string& filename) const {
     std::ofstream file(filename, std::ios::binary | std::ios::trunc);
     if (!file) throw std::runtime_error("No se pudo crear el archivo: " + filename);

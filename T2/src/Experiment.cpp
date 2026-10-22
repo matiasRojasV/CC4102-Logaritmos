@@ -6,6 +6,7 @@
 #include <random>
 #include <stdexcept>
 
+
 std::vector<Pair> readBinaryData(const std::string& filename, std::size_t limit) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) throw std::runtime_error("No se pudo abrir el archivo de datos: " + filename);
@@ -19,6 +20,8 @@ std::vector<Pair> readBinaryData(const std::string& filename, std::size_t limit)
     return values;
 }
 
+
+// Construye los árboles, mide inserciones y busquedas, y guarda un CSV
 void runExperiments(const std::string& dataFile, const std::string& outputDir) {
     std::ofstream csv(outputDir + "/experiment_results.csv");
     csv << "N,Tree,BuildTime,RAM_Reads,RAM_Writes,NumNodes,AvgSearchTime,AvgDiskReads\n";
@@ -33,7 +36,8 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
         auto data = readBinaryData(dataFile, N);
         if (data.size() < N) break;
 
-        // --- ARBOL B ---
+
+        // ARBOL B
         {
             std::cout << "  [BTree] construyendo..." << std::flush;
             BTree btree;
@@ -66,7 +70,8 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
             std::cout << " listo (" << btree.size() << " nodos)\n";
         }
 
-        // --- ARBOL B^eps (0.25) ---
+
+        // ARBOL B^eps (0.25)
         {
             std::cout << "  [Beps025] construyendo..." << std::flush;
             BTreeEpsilon<4, 506> eps25(0.5);
@@ -99,7 +104,8 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
             std::cout << " listo (" << eps25.size() << " nodos)\n";
         }
 
-        // --- ARBOL B^eps (0.75) ---
+
+        // ARBOL B^eps (0.75)
         {
             std::cout << "  [Beps075] construyendo..." << std::flush;
             BTreeEpsilon<126, 384> eps75(0.5);
@@ -135,6 +141,8 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
     csv.close();
 }
 
+
+// Repite el experimento con distintos valores del parametro alpha
 void runAlphaBonus(const std::string& dataFile, const std::string& outputDir) {
     constexpr std::size_t N = 1ULL << 24;
     const auto data = readBinaryData(dataFile, N);

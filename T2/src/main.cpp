@@ -7,6 +7,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // El segundo argumento opcional indica dónde guardar los resultados.
     std::string dataFile = argv[1];
     std::string outputDir = argc >= 3 ? argv[2] : ".";
 
