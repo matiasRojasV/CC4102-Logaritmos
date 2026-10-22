@@ -70,3 +70,27 @@ Para eliminar el ejecutable y los archivos binarios generados, ejecutar:
 ```bash
 make clean
 ```
+
+## Generación de gráficos
+
+El script `python/plot.py` utiliza los archivos `experiment_results.csv` y
+`alpha_bonus_results.csv` para generar las figuras del informe. Se requieren
+Python 3 y las bibliotecas `pandas` y `matplotlib`.
+
+Desde la carpeta del proyecto, ejecutar:
+
+```bash
+python3 python/plot.py
+```
+
+Las figuras se guardan automáticamente en la carpeta `figures/`:
+
+- `insertion_cost.png`: escrituras y tiempo de construcción.
+- `search_cost.png`: lecturas de disco y tiempo de búsqueda.
+- `alpha_analysis.png`: efecto de `alpha` sobre las escrituras y lecturas.
+
+También se pueden indicar otras carpetas:
+
+```bash
+python3 python/plot.py --input-dir out --output-dir figures
+```
