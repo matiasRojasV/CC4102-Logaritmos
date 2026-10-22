@@ -77,20 +77,15 @@ El script `python/plot.py` utiliza los archivos `experiment_results.csv` y
 `alpha_bonus_results.csv` para generar las figuras del informe. Se requieren
 Python 3 y las bibliotecas `pandas` y `matplotlib`.
 
-Desde la carpeta del proyecto, ejecutar:
+Desde la carpeta del proyecto, ejecutar indicando primero la carpeta de los CSV
+y luego la carpeta de salida:
 
 ```bash
-python3 python/plot.py
+python3 python/plot.py out/test2 python/plot
 ```
 
-Las figuras se guardan automáticamente en la carpeta `figures/`:
+Las figuras SVG se guardan en la carpeta de salida:
 
-- `insertion_cost.png`: escrituras y tiempo de construcción.
-- `search_cost.png`: lecturas de disco y tiempo de búsqueda.
-- `alpha_analysis.png`: efecto de `alpha` sobre las escrituras y lecturas.
-
-También se pueden indicar otras carpetas:
-
-```bash
-python3 python/plot.py --input-dir out --output-dir figures
-```
+- `insertion_cost.svg`: escrituras y tiempo de construcción.
+- `search_cost.svg`: lecturas de disco y tiempo de búsqueda.
+- `alpha_analysis.svg`: efecto de `alpha` sobre las escrituras y lecturas.

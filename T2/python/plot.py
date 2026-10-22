@@ -21,19 +21,16 @@ TREE_COLORS = {
 
 def parse_args():
     """Obtiene las carpetas de entrada y salida desde la línea de comandos."""
-    project_dir = Path(__file__).resolve().parents[1]
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--input-dir",
+        "input_dir",
         type=Path,
-        default=project_dir / "out",
-        help="carpeta con experiment_results.csv y alpha_bonus_results.csv",
+        help="carpeta con los archivos CSV",
     )
     parser.add_argument(
-        "--output-dir",
+        "output_dir",
         type=Path,
-        default=project_dir / "figures",
-        help="carpeta donde se guardarán las figuras",
+        help="carpeta donde se guardarán las figuras SVG",
     )
     return parser.parse_args()
 
@@ -92,7 +89,7 @@ def plot_insertion(data, output_dir):
         "Tiempo (s)",
     )
     figure.suptitle("Costo de inserción")
-    figure.savefig(output_dir / "insertion_cost.png", dpi=150)
+    figure.savefig(output_dir / "insertion_cost.svg", format="svg")
     plt.close(figure)
 
 
@@ -114,7 +111,7 @@ def plot_search(data, output_dir):
         "Tiempo (s)",
     )
     figure.suptitle("Costo de búsqueda por rango")
-    figure.savefig(output_dir / "search_cost.png", dpi=150)
+    figure.savefig(output_dir / "search_cost.svg", format="svg")
     plt.close(figure)
 
 
@@ -134,7 +131,7 @@ def plot_alpha(data, output_dir):
     for axis in axes:
         axis.grid(True, alpha=0.25)
     figure.suptitle(r"Análisis del parámetro $\alpha$")
-    figure.savefig(output_dir / "alpha_analysis.png", dpi=150)
+    figure.savefig(output_dir / "alpha_analysis.svg", format="svg")
     plt.close(figure)
 
 
