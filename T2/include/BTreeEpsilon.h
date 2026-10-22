@@ -12,6 +12,7 @@
 
 template <std::size_t C, std::size_t LMAX>
 struct BTreeEpsilonNode {
+    // Nodo con llaves separadoras, referencias a hijos y buffer de inserciones
     std::int32_t isInternal = 0;
     std::int32_t keyCount = 0;
     std::int32_t bufferCount = 0;
@@ -23,12 +24,15 @@ struct BTreeEpsilonNode {
 template <std::size_t C, std::size_t LMAX>
 class BTreeEpsilon {
 public:
+    // Crea un árbol Bε con el valor indicado de alpha
     explicit BTreeEpsilon(double alpha = 0.5) : alpha_(alpha) {
         if (!(alpha_ > 0.0 && alpha_ < 1.0))
             throw std::invalid_argument("alpha debe estar estrictamente entre 0 y 1");
         nodes_.emplace_back();
     }
 
+
+    // Inserta un par en el buffer o divide la raíz si es necesario
     void insert(Pair value) {
         ++counters_.reads;
         if (!nodes_[0].isInternal) {
@@ -43,6 +47,8 @@ public:
         ++counters_.writes;
     }
 
+
+    // Busca por rango en los nodos almacenados en disco
     Results rangeSearch(std::int32_t lower, std::int32_t upper,
                         const std::string& filename) {
         if (lower > upper) std::swap(lower, upper);
@@ -57,6 +63,8 @@ public:
         return result;
     }
 
+
+    // Guarda todos los nodos del árbol en un archivo binario
     void writeToDisk(const std::string& filename) const {
         std::ofstream file(filename, std::ios::binary | std::ios::trunc);
         if (!file)
@@ -73,6 +81,7 @@ public:
     std::size_t size() const { return nodes_.size(); }
     void resetCounters() { counters_.reset(); searchReads_ = 0; }
 
+
 private:
     using Node = BTreeEpsilonNode<C, LMAX>;
 
@@ -81,6 +90,8 @@ private:
     Counters counters_;
     std::uint64_t searchReads_ = 0;
 
+
+    // Inserta un valor manteniendo ordenado el buffer del nodo
     static void insertSorted(Node& node, Pair value) {
         int position = node.bufferCount;
         while (position > 0 && node.buffer[position - 1].first > value.first) {
@@ -91,14 +102,18 @@ private:
         ++node.bufferCount;
     }
 
+    // Inserta varios valores ordenados en el buffer.
     static void insertSorted(Node& node, const std::vector<Pair>& values) {
         for (const Pair& value : values) insertSorted(node, value);
     }
 
+    // Busca el padre de un nodo recorriendo el árbol
     int parentOf(int child) const {
         return findParent(0, child);
     }
 
+
+    // Busca recursivamente el padre de un nodo
     int findParent(int current, int child) const {
         if (!nodes_[current].isInternal) return -1;
         for (int i = 0; i <= nodes_[current].keyCount; ++i) {
@@ -110,12 +125,16 @@ private:
         return -1;
     }
 
+
+    // Obtiene la posición del hijo que corresponde a una llave
     int childPosition(const Node& parent, std::int32_t key) const {
         int position = 0;
         while (position < parent.keyCount && key > parent.keys[position]) ++position;
         return position;
     }
 
+
+    // Divide una hoja y devuelve el índice de la nueva hoja derecha
     int splitLeaf(int leafIndex) {
         Node& leaf = nodes_[leafIndex];
         Node right;
@@ -129,6 +148,8 @@ private:
         return static_cast<int>(nodes_.size() - 1);
     }
 
+
+    // Convierte una raíz hoja llena en una raíz interna
     void splitRootLeaf() {
         const int oldLeaf = static_cast<int>(nodes_.size());
         nodes_.push_back(nodes_[0]);
@@ -143,6 +164,8 @@ private:
         ++counters_.writes;
     }
 
+
+    // Divide un nodo interno y redistribuye sus buffers e hijos
     int splitInternal(int index) {
         Node& node = nodes_[index];
         Node right;
@@ -169,6 +192,8 @@ private:
         return static_cast<int>(nodes_.size() - 1);
     }
 
+
+    // Agrega una llave separadora y un hijo a un nodo no lleno
     void insertChildNonFull(int parentIndex, int position,
                             std::int32_t separator, int rightChild) {
         Node& parent = nodes_[parentIndex];
@@ -181,6 +206,8 @@ private:
         ++parent.keyCount;
     }
 
+
+    // Agrega un hijo y divide nodos internos llenos cuando corresponde
     void addChild(int parentIndex, int position, std::int32_t separator, int rightChild) {
         if (nodes_[parentIndex].keyCount < static_cast<int>(C)) {
             insertChildNonFull(parentIndex, position, separator, rightChild);
@@ -221,6 +248,7 @@ private:
     }
     
 
+    // Envía un grupo de valores al hijo correspondiente
     void deliver(int parentIndex, std::vector<Pair> values) {
         if (values.empty()) return;
         
@@ -269,6 +297,8 @@ private:
         deliver(parentIndex, std::move(values));
     }
 
+
+    // Distribuye el buffer de un nodo interno entre sus hijos
     void flush(int parentIndex) {
         if (!nodes_[parentIndex].isInternal || nodes_[parentIndex].bufferCount == 0) return;
         
@@ -300,6 +330,8 @@ private:
         ++counters_.writes;
     }
 
+    
+    // Lee un nodo desde disco y recorre los hijos que intersectan el rango
     void searchNode(std::ifstream& file, int index, std::int32_t lower,
                     std::int32_t upper, Results& result) {
         file.seekg(static_cast<std::streamoff>(index) * sizeof(Node));
