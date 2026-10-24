@@ -6,9 +6,19 @@
 BTree::BTree() {
     BTreeNode root;
     nodes_.push_back(root);
-    counters_.writes++;
+    ++counters_.writes;
 }
 
+// Cada lectura o escritura del arreglo representa un acceso a un bloque.
+BTreeNode BTree::readNode(int index) {
+    ++counters_.reads;
+    return nodes_[index];
+}
+
+void BTree::writeNode(int index, const BTreeNode& node) {
+    nodes_[index] = node;
+    ++counters_.writes;
+}
 
 // Guarda un nodo nuevo al final del arreglo en mem
 int BTree::append(const BTreeNode& node) {
@@ -20,9 +30,9 @@ int BTree::append(const BTreeNode& node) {
 
 // Separa un nodo lleno en dos nodos y sube la llave mediana
 void BTree::splitChild(int parent, int position) {
-    int oldIndex = nodes_[parent].children[position];
-    BTreeNode old = nodes_[oldIndex];
-    ++counters_.reads;
+    const BTreeNode parentNode = readNode(parent);
+    const int oldIndex = parentNode.children[position];
+    const BTreeNode old = readNode(oldIndex);
 
     BTreeNode left = old, right = old;
     const int middle = static_cast<int>(BTREE_B / 2) - 1; // Posición mediana
@@ -43,27 +53,24 @@ void BTree::splitChild(int parent, int position) {
         }
     }
 
-    nodes_[oldIndex] = left;
-    ++counters_.writes;
+    writeNode(oldIndex, left);
 
     const int rightIndex = append(right);
 
-    // Re-obtener referencia tras el append para evitar dangling reference
-    BTreeNode& p = nodes_[parent];
+    BTreeNode p = parentNode;
     for (int i = p.count; i >= position + 1; --i) p.children[i + 1] = p.children[i];
     p.children[position + 1] = rightIndex;
     for (int i = p.count - 1; i >= position; --i) p.items[i + 1] = p.items[i];
     p.items[position] = median;
     ++p.count;
-    ++counters_.writes;
+    writeNode(parent, p);
 }
 
 
 // Inserta el valor en una hoja o desciende al hijo correspondiente
 void BTree::insertNonFull(int node, Pair value) {
-    ++counters_.reads;
-    if (!nodes_[node].isInternal) {
-        BTreeNode& current = nodes_[node];
+    BTreeNode current = readNode(node);
+    if (!current.isInternal) {
         int i = current.count - 1;
         while (i >= 0 && current.items[i].first > value.first) {
             current.items[i + 1] = current.items[i];
@@ -71,37 +78,38 @@ void BTree::insertNonFull(int node, Pair value) {
         }
         current.items[i + 1] = value;
         ++current.count;
-        ++counters_.writes;
+        writeNode(node, current);
         return;
     }
 
     int position = 0;
-    while (position < nodes_[node].count && value.first > nodes_[node].items[position].first) {
+    while (position < current.count && value.first > current.items[position].first) {
         ++position;
     }
 
-    int child = nodes_[node].children[position];
-    if (nodes_[child].count == static_cast<int>(BTREE_B)) {
+    const int child = current.children[position];
+    if (readNode(child).count == static_cast<int>(BTREE_B)) {
         splitChild(node, position);
-        if (value.first > nodes_[node].items[position].first) {
+        current = readNode(node);
+        if (value.first > current.items[position].first) {
             ++position;
         }
     }
-    insertNonFull(nodes_[node].children[position], value);
+    current = readNode(node);
+    insertNonFull(current.children[position], value);
 }
 
 
 // Inserta un valor; si la raíz está llena, crea una nueva raíz
 void BTree::insert(Pair value) {
-    if (nodes_[0].count == static_cast<int>(BTREE_B)) {
-        BTreeNode oldRoot = nodes_[0];
+    if (readNode(0).count == static_cast<int>(BTREE_B)) {
+        BTreeNode oldRoot = readNode(0);
         const int oldIndex = append(oldRoot);
 
         BTreeNode newRoot;
         newRoot.isInternal = 1;
         newRoot.children[0] = oldIndex;
-        nodes_[0] = newRoot;
-        ++counters_.writes;
+        writeNode(0, newRoot);
 
         splitChild(0, 0);
     }

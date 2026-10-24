@@ -31,8 +31,8 @@ directorio donde se guardarán los resultados:
 ./T2 datos.bin out
 ```
 
-El directorio de salida debe existir antes de ejecutar el programa. Si no se
-indica, se utiliza la carpeta actual.
+El directorio de salida se crea automáticamente si no existe. Si no se indica,
+se utiliza la carpeta actual.
 
 El programa ejecuta automáticamente:
 
@@ -48,11 +48,21 @@ En el directorio de salida se generan:
 - `experiment_results.csv`: resultados de las comparaciones principales.
 - `alpha_bonus_results.csv`: resultados del experimento con distintos valores
   de `α`.
+- `range_comparison.csv`: resultados de la misma búsqueda para `N = 2^15` y
+  `N = 2^26`.
 - `btree.bin`, `beps025.bin` y `beps075.bin`: árboles serializados en formato
   binario.
 
 Cada nodo ocupa un bloque de 4096 bytes. Las búsquedas por rango son inclusivas,
-es decir, consideran las llaves dentro de `[l, u]`.
+es decir, consideran las llaves dentro de `[l, u]`. En el experimento
+principal se usa `α = 0.5` para ambas variantes de `Bε`; este valor queda
+registrado en la columna `Alpha` del CSV.
+
+Los contadores `RAM_Reads` y `RAM_Writes` contabilizan accesos lógicos a nodos
+completos durante la construcción: leer un nodo del arreglo simulado cuenta como
+una lectura y modificarlo o agregarlo cuenta como una escritura. La escritura
+final del árbol al archivo no se mezcla con estos contadores; las búsquedas
+reportan separadamente `AvgDiskReads`.
 
 ## Estructura del proyecto
 
@@ -77,15 +87,25 @@ El script `python/plot.py` utiliza los archivos `experiment_results.csv` y
 `alpha_bonus_results.csv` para generar las figuras del informe. Se requieren
 Python 3 y las bibliotecas `pandas` y `matplotlib`.
 
+Para instalar las dependencias sin modificar el Python del sistema:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r python/requirements.txt
+```
+
 Desde la carpeta del proyecto, ejecutar indicando primero la carpeta de los CSV
 y luego la carpeta de salida:
 
 ```bash
-python3 python/plot.py out/test2 python/plot
+.venv/bin/python python/plot.py out python/plot
 ```
 
 Las figuras SVG se guardan en la carpeta de salida:
 
-- `insertion_cost.svg`: escrituras y tiempo de construcción.
+- `insertion_cost.svg`: lecturas, escrituras y tiempo de construcción.
+- `tree_size.svg`: cantidad de nodos/bloques del árbol.
 - `search_cost.svg`: lecturas de disco y tiempo de búsqueda.
 - `alpha_analysis.svg`: efecto de `alpha` sobre las escrituras y lecturas.
+- `range_comparison.svg`: temperaturas de la misma semana para `N=2^15` y
+  `N=2^26`.

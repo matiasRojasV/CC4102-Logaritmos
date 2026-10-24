@@ -3,8 +3,39 @@
 #include "BTreeEpsilon.h"
 #include <fstream>
 #include <chrono>
+#include <filesystem>
+#include <iostream>
 #include <random>
 #include <stdexcept>
+
+namespace {
+constexpr std::int32_t MIN_TIMESTAMP = 1546300800;
+constexpr std::int32_t MAX_TIMESTAMP = 1754006400;
+constexpr std::int32_t WEEK_SECONDS = 604800;
+constexpr double MAIN_ALPHA = 0.5;
+
+void ensureOutputDirectory(const std::string& outputDir) {
+    std::error_code error;
+    if (!std::filesystem::create_directories(outputDir, error) && error) {
+        throw std::runtime_error("No se pudo crear el directorio de salida: " +
+                                 outputDir + ": " + error.message());
+    }
+}
+
+std::ofstream openOutput(const std::string& filename) {
+    std::ofstream file(filename);
+    if (!file) throw std::runtime_error("No se pudo crear el archivo: " + filename);
+    return file;
+}
+
+void writeRangeComparison(const std::string& filename, std::size_t n,
+                          const Results& result) {
+    std::ofstream file(filename, std::ios::app);
+    if (!file) throw std::runtime_error("No se pudo abrir el archivo: " + filename);
+    for (const Pair& value : result)
+        file << n << "," << value.first << "," << value.second << "\n";
+}
+}  // namespace
 
 
 std::vector<Pair> readBinaryData(const std::string& filename, std::size_t limit) {
@@ -23,11 +54,20 @@ std::vector<Pair> readBinaryData(const std::string& filename, std::size_t limit)
 
 // Construye los árboles, mide inserciones y busquedas, y guarda un CSV
 void runExperiments(const std::string& dataFile, const std::string& outputDir) {
-    std::ofstream csv(outputDir + "/experiment_results.csv");
-    csv << "N,Tree,BuildTime,RAM_Reads,RAM_Writes,NumNodes,AvgSearchTime,AvgDiskReads\n";
+    ensureOutputDirectory(outputDir);
+    const std::string comparisonPath = outputDir + "/range_comparison.csv";
+    std::ofstream comparison(comparisonPath);
+    if (!comparison)
+        throw std::runtime_error("No se pudo crear el archivo: " + comparisonPath);
+    comparison << "N,Key,Temperature\n";
+
+    std::ofstream csv = openOutput(outputDir + "/experiment_results.csv");
+    csv << "N,Tree,Alpha,BuildTime,RAM_Reads,RAM_Writes,NumNodes,"
+           "AvgSearchTime,AvgDiskReads\n";
 
     std::mt19937 rng(42);
-    std::uniform_int_distribution<std::int32_t> dist(1546300800, 1754006400 - 604800); // Rango Unix Quinta Normal
+    std::uniform_int_distribution<std::int32_t> dist(
+        MIN_TIMESTAMP, MAX_TIMESTAMP - WEEK_SECONDS);
 
     for (int exp = 15; exp <= 26; ++exp) {
         std::size_t N = 1ULL << exp;
@@ -54,7 +94,7 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
 
             for (int q = 0; q < 50; ++q) {
                 std::int32_t l = dist(rng);
-                std::int32_t u = l + 604800; // 1 semana
+                std::int32_t u = l + WEEK_SECONDS; // 1 semana
                 
                 auto st0 = std::chrono::high_resolution_clock::now();
                 auto res = btree.rangeSearch(l, u, path);
@@ -64,7 +104,15 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
                 totalReads += btree.searchReads();
             }
 
-            csv << N << ",BTree," << buildTime << "," << btree.insertionReads() << ","
+            if (exp == 15 || exp == 26) {
+                const Results comparisonResult =
+                    btree.rangeSearch(MIN_TIMESTAMP, MIN_TIMESTAMP + WEEK_SECONDS, path);
+                comparison.flush();
+                writeRangeComparison(comparisonPath, N, comparisonResult);
+            }
+
+            csv << N << ",BTree," << MAIN_ALPHA << "," << buildTime << ","
+                << btree.insertionReads() << ","
                 << btree.insertionWrites() << "," << btree.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
             std::cout << " listo (" << btree.size() << " nodos)\n";
@@ -88,7 +136,7 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
 
             for (int q = 0; q < 50; ++q) {
                 std::int32_t l = dist(rng);
-                std::int32_t u = l + 604800;
+                std::int32_t u = l + WEEK_SECONDS;
                 
                 auto st0 = std::chrono::high_resolution_clock::now();
                 auto res = eps25.rangeSearch(l, u, path);
@@ -98,7 +146,8 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
                 totalReads += eps25.searchReads();
             }
 
-            csv << N << ",Beps025," << buildTime << "," << eps25.insertionReads() << ","
+            csv << N << ",Beps025," << MAIN_ALPHA << "," << buildTime << ","
+                << eps25.insertionReads() << ","
                 << eps25.insertionWrites() << "," << eps25.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
             std::cout << " listo (" << eps25.size() << " nodos)\n";
@@ -122,7 +171,7 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
 
             for (int q = 0; q < 50; ++q) {
                 std::int32_t l = dist(rng);
-                std::int32_t u = l + 604800;
+                std::int32_t u = l + WEEK_SECONDS;
 
                 auto st0 = std::chrono::high_resolution_clock::now();
                 auto res = eps75.rangeSearch(l, u, path);
@@ -132,13 +181,15 @@ void runExperiments(const std::string& dataFile, const std::string& outputDir) {
                 totalReads += eps75.searchReads();
             }
 
-            csv << N << ",Beps075," << buildTime << "," << eps75.insertionReads() << ","
+            csv << N << ",Beps075," << MAIN_ALPHA << "," << buildTime << ","
+                << eps75.insertionReads() << ","
                 << eps75.insertionWrites() << "," << eps75.size() << ","
                 << (totalSearchTime / 50.0) << "," << (totalReads / 50.0) << "\n";
             std::cout << " listo (" << eps75.size() << " nodos)\n";
         }
     }
     csv.close();
+    comparison.close();
 }
 
 
@@ -149,9 +200,8 @@ void runAlphaBonus(const std::string& dataFile, const std::string& outputDir) {
     if (data.size() < N)
         throw std::runtime_error("No hay suficientes datos para el experimento de alpha");
 
-    std::ofstream csv(outputDir + "/alpha_bonus_results.csv");
-    if (!csv)
-        throw std::runtime_error("No se pudo crear el archivo de resultados de alpha");
+    ensureOutputDirectory(outputDir);
+    std::ofstream csv = openOutput(outputDir + "/alpha_bonus_results.csv");
     csv << "N,Alpha,BuildTime,RAM_Reads,RAM_Writes,NumNodes,AvgSearchTime,AvgDiskReads\n";
 
     std::mt19937 rng(4242);
@@ -174,7 +224,7 @@ void runAlphaBonus(const std::string& dataFile, const std::string& outputDir) {
         std::uint64_t totalReads = 0;
         for (int q = 0; q < 20; ++q) {
             const std::int32_t lower = dist(rng);
-            const std::int32_t upper = lower + 604800;
+            const std::int32_t upper = lower + WEEK_SECONDS;
 
             auto st0 = std::chrono::high_resolution_clock::now();
             auto result = tree.rangeSearch(lower, upper, path);

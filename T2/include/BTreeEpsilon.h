@@ -29,21 +29,27 @@ public:
         if (!(alpha_ > 0.0 && alpha_ < 1.0))
             throw std::invalid_argument("alpha debe estar estrictamente entre 0 y 1");
         nodes_.emplace_back();
+        ++counters_.writes;
     }
 
 
     // Inserta un par en el buffer o divide la raíz si es necesario
     void insert(Pair value) {
         ++counters_.reads;
-        if (!nodes_[0].isInternal) {
-            if (nodes_[0].bufferCount == static_cast<int>(LMAX))
+        Node root = nodes_[0];
+        if (!root.isInternal) {
+            if (root.bufferCount == static_cast<int>(LMAX))
                 splitRootLeaf();
-        } else if (nodes_[0].bufferCount == static_cast<int>(LMAX)) {
+        } else if (root.bufferCount == static_cast<int>(LMAX)) {
             flush(0);
+            ++counters_.reads;
             if (nodes_[0].bufferCount == static_cast<int>(LMAX))
                 flush(0);
         }
-        insertSorted(nodes_[0], value);
+        ++counters_.reads;
+        root = nodes_[0];
+        insertSorted(root, value);
+        nodes_[0] = root;
         ++counters_.writes;
     }
 
@@ -87,7 +93,7 @@ private:
 
     double alpha_;
     std::vector<Node> nodes_;
-    Counters counters_;
+    mutable Counters counters_;
     std::uint64_t searchReads_ = 0;
 
 
@@ -115,6 +121,7 @@ private:
 
     // Busca recursivamente el padre de un nodo
     int findParent(int current, int child) const {
+        ++counters_.reads;
         if (!nodes_[current].isInternal) return -1;
         for (int i = 0; i <= nodes_[current].keyCount; ++i) {
             const int candidate = nodes_[current].children[i];
@@ -136,6 +143,7 @@ private:
 
     // Divide una hoja y devuelve el índice de la nueva hoja derecha
     int splitLeaf(int leafIndex) {
+        ++counters_.reads;
         Node& leaf = nodes_[leafIndex];
         Node right;
         const int middle = static_cast<int>(LMAX / 2);
@@ -143,6 +151,7 @@ private:
         for (int i = 0; i < right.bufferCount; ++i)
             right.buffer[i] = leaf.buffer[middle + i];
         leaf.bufferCount = middle;
+        ++counters_.writes;
         nodes_.push_back(right);
         ++counters_.writes;
         return static_cast<int>(nodes_.size() - 1);
@@ -152,11 +161,14 @@ private:
     // Convierte una raíz hoja llena en una raíz interna
     void splitRootLeaf() {
         const int oldLeaf = static_cast<int>(nodes_.size());
+        ++counters_.reads;
         nodes_.push_back(nodes_[0]);
+        ++counters_.writes;
         const int right = splitLeaf(oldLeaf);
         Node root;
         root.isInternal = 1;
         root.keyCount = 1;
+        ++counters_.reads;
         root.keys[0] = nodes_[oldLeaf].buffer[nodes_[oldLeaf].bufferCount - 1].first;
         root.children[0] = oldLeaf;
         root.children[1] = right;
@@ -167,6 +179,7 @@ private:
 
     // Divide un nodo interno y redistribuye sus buffers e hijos
     int splitInternal(int index) {
+        ++counters_.reads;
         Node& node = nodes_[index];
         Node right;
         right.isInternal = 1;
@@ -187,6 +200,7 @@ private:
                 insertSorted(right, oldBuffer[i]);
         }
         node.keyCount = middle;
+        ++counters_.writes;
         nodes_.push_back(right);
         ++counters_.writes;
         return static_cast<int>(nodes_.size() - 1);
@@ -196,6 +210,7 @@ private:
     // Agrega una llave separadora y un hijo a un nodo no lleno
     void insertChildNonFull(int parentIndex, int position,
                             std::int32_t separator, int rightChild) {
+        ++counters_.reads;
         Node& parent = nodes_[parentIndex];
         for (int i = parent.keyCount; i > position; --i) {
             parent.keys[i] = parent.keys[i - 1];
@@ -204,16 +219,19 @@ private:
         parent.keys[position] = separator;
         parent.children[position + 1] = rightChild;
         ++parent.keyCount;
+        ++counters_.writes;
     }
 
 
     // Agrega un hijo y divide nodos internos llenos cuando corresponde
     void addChild(int parentIndex, int position, std::int32_t separator, int rightChild) {
+        ++counters_.reads;
         if (nodes_[parentIndex].keyCount < static_cast<int>(C)) {
             insertChildNonFull(parentIndex, position, separator, rightChild);
             return;
         }
 
+        ++counters_.reads;
         const int middle = nodes_[parentIndex].keyCount / 2;
         const std::int32_t middleKey = nodes_[parentIndex].keys[middle];
         int leftParent = parentIndex;
@@ -221,7 +239,9 @@ private:
 
         if (parentIndex == 0) {
             leftParent = static_cast<int>(nodes_.size());
+            ++counters_.reads;
             nodes_.push_back(nodes_[0]);
+            ++counters_.writes;
             rightParent = splitInternal(leftParent);
 
             Node newRoot;
@@ -231,6 +251,7 @@ private:
             newRoot.children[0] = leftParent;
             newRoot.children[1] = rightParent;
             nodes_[0] = newRoot;
+            ++counters_.writes;
 
             parentIndex = separator <= middleKey ? leftParent : rightParent;
         } else {
@@ -239,6 +260,7 @@ private:
             if (grand < 0)
                 throw std::logic_error("Nodo interno sin padre");
             const int parentPosition = childPosition(nodes_[grand], middleKey);
+            ++counters_.reads;
             addChild(grand, parentPosition, middleKey, rightParent);
             parentIndex = separator <= middleKey ? parentIndex : rightParent;
         }
@@ -251,11 +273,12 @@ private:
     // Envía un grupo de valores al hijo correspondiente
     void deliver(int parentIndex, std::vector<Pair> values) {
         if (values.empty()) return;
-        
+        ++counters_.reads;
         int position = childPosition(nodes_[parentIndex], values.front().first);
         int childIndex = nodes_[parentIndex].children[position];
         
         // Se accede directamente mediante nodes_[childIndex] en lugar de crear una referencia
+        ++counters_.reads;
         if (nodes_[childIndex].bufferCount + static_cast<int>(values.size()) <= static_cast<int>(LMAX)) {
             insertSorted(nodes_[childIndex], values);
             ++counters_.writes;
@@ -279,6 +302,7 @@ private:
             rightNode.bufferCount = static_cast<int>(merged.size()) - middle;
             for (int i = 0; i < rightNode.bufferCount; ++i)
                 rightNode.buffer[i] = merged[middle + i];
+            ++counters_.writes;
             nodes_.push_back(rightNode);
             const int right = static_cast<int>(nodes_.size() - 1);
             const std::int32_t separator = nodes_[childIndex].buffer[middle - 1].first;
@@ -300,6 +324,7 @@ private:
 
     // Distribuye el buffer de un nodo interno entre sus hijos
     void flush(int parentIndex) {
+        ++counters_.reads;
         if (!nodes_[parentIndex].isInternal || nodes_[parentIndex].bufferCount == 0) return;
         
         const int numChildren = nodes_[parentIndex].keyCount + 1;
@@ -316,6 +341,7 @@ private:
         std::vector<Pair> remaining;
         
         nodes_[parentIndex].bufferCount = 0;
+        ++counters_.writes;
         
         for (int i = numChildren - 1; i >= 0; --i) {
             if (static_cast<int>(groups[i].size()) >= threshold) {

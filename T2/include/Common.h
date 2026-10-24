@@ -20,7 +20,8 @@ static_assert(sizeof(Pair) == 8, "El tamaño de Pair debe ser exactamente 8 byte
 using Results = std::vector<Pair>;
 
 
-// Contadores de accesos simulados durante la construcción
+// Contadores de accesos a bloques durante la construcción en RAM.
+// Cada lectura o escritura de un nodo completo cuenta como un acceso.
 struct Counters {
     std::uint64_t reads = 0;
     std::uint64_t writes = 0;

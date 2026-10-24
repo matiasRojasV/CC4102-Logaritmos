@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 
 
@@ -72,17 +73,24 @@ def plot_tree_metric(axes, data, metric, title, y_label):
 
 
 def plot_insertion(data, output_dir):
-    """Genera la figura de escrituras y tiempo de construcción."""
-    figure, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
+    """Genera las figuras de accesos y tiempo de construcción."""
+    figure, axes = plt.subplots(1, 3, figsize=(18, 5), constrained_layout=True)
     plot_tree_metric(
         axes[0],
+        data,
+        "RAM_Reads",
+        "Lecturas durante la inserción",
+        "RAM_Reads",
+    )
+    plot_tree_metric(
+        axes[1],
         data,
         "RAM_Writes",
         "Escrituras durante la inserción",
         "RAM_Writes",
     )
     plot_tree_metric(
-        axes[1],
+        axes[2],
         data,
         "BuildTime",
         "Tiempo de construcción",
@@ -90,6 +98,14 @@ def plot_insertion(data, output_dir):
     )
     figure.suptitle("Costo de inserción")
     figure.savefig(output_dir / "insertion_cost.svg", format="svg")
+    plt.close(figure)
+
+
+def plot_size(data, output_dir):
+    """Genera el tamaño del árbol en cantidad de bloques."""
+    figure, axis = plt.subplots(figsize=(8, 5), constrained_layout=True)
+    plot_tree_metric(axis, data, "NumNodes", "Tamaño del árbol", "Nodos (bloques)")
+    figure.savefig(output_dir / "tree_size.svg", format="svg")
     plt.close(figure)
 
 
@@ -135,6 +151,23 @@ def plot_alpha(data, output_dir):
     plt.close(figure)
 
 
+def plot_range_comparison(data, output_dir):
+    """Grafica temperaturas de una misma semana para los dos tamaños pedidos."""
+    figure, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True,
+                                constrained_layout=True)
+    for axis, (n, group) in zip(axes, data.groupby("N", sort=True)):
+        timestamps = pd.to_datetime(group["Key"], unit="s", utc=True)
+        axis.plot(timestamps, group["Temperature"], linewidth=0.7)
+        axis.set_title(f"Árbol B, N={int(n):,}")
+        axis.set_ylabel("Temperatura (°C)")
+        axis.grid(True, alpha=0.25)
+    axes[-1].set_xlabel("Tiempo (UTC)")
+    axes[-1].xaxis.set_major_formatter(mdates.DateFormatter("%d-%m %H:%M"))
+    figure.suptitle("Misma búsqueda por rango para dos tamaños de entrada")
+    figure.savefig(output_dir / "range_comparison.svg", format="svg")
+    plt.close(figure)
+
+
 def main():
     """Lee los resultados y crea todas las figuras del informe."""
     args = parse_args()
@@ -143,8 +176,11 @@ def main():
     experiment_columns = {
         "N",
         "Tree",
+        "Alpha",
         "BuildTime",
+        "RAM_Reads",
         "RAM_Writes",
+        "NumNodes",
         "AvgSearchTime",
         "AvgDiskReads",
     }
@@ -155,10 +191,17 @@ def main():
     alpha_data = load_csv(
         args.input_dir, "alpha_bonus_results.csv", alpha_columns
     )
+    comparison_data = load_csv(
+        args.input_dir,
+        "range_comparison.csv",
+        {"N", "Key", "Temperature"},
+    )
 
     plot_insertion(experiment_data, args.output_dir)
+    plot_size(experiment_data, args.output_dir)
     plot_search(experiment_data, args.output_dir)
     plot_alpha(alpha_data, args.output_dir)
+    plot_range_comparison(comparison_data, args.output_dir)
     print(f"Figuras guardadas en {args.output_dir}")
 
 
