@@ -162,6 +162,10 @@ Results BTree::rangeSearch(std::int32_t lower, std::int32_t upper, const std::st
     searchReads_ = 0;
     Results result;
     searchNode(file, 0, lower, upper, result);
+    std::stable_sort(result.begin(), result.end(),
+                     [](const Pair& a, const Pair& b) {
+                         return a.first < b.first;
+                     });
     return result;
 }
 

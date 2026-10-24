@@ -132,19 +132,19 @@ def plot_search(data, output_dir):
 
 
 def plot_alpha(data, output_dir):
-    """Genera la figura del efecto de alpha sobre inserción y búsqueda."""
-    figure, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
-    axes[0].plot(data["Alpha"], data["RAM_Writes"], marker="o", color="#d62728")
-    axes[0].set_title("Escrituras según alpha")
-    axes[0].set_xlabel("Alpha")
-    axes[0].set_ylabel("RAM_Writes")
-
-    axes[1].plot(data["Alpha"], data["AvgDiskReads"], marker="o", color="#9467bd")
-    axes[1].set_title("Lecturas de disco según alpha")
-    axes[1].set_xlabel("Alpha")
-    axes[1].set_ylabel("AvgDiskReads")
-
-    for axis in axes:
+    """Genera las métricas de inserción y búsqueda según alpha."""
+    metrics = [
+        ("BuildTime", "Tiempo de construcción", "Tiempo (s)", "#1f77b4"),
+        ("RAM_Writes", "Escrituras durante la inserción", "RAM_Writes", "#d62728"),
+        ("AvgSearchTime", "Tiempo promedio de búsqueda", "Tiempo (s)", "#2ca02c"),
+        ("AvgDiskReads", "Lecturas por búsqueda", "AvgDiskReads", "#9467bd"),
+    ]
+    figure, axes = plt.subplots(2, 2, figsize=(13, 9), constrained_layout=True)
+    for axis, (metric, title, y_label, color) in zip(axes.flat, metrics):
+        axis.plot(data["Alpha"], data[metric], marker="o", color=color)
+        axis.set_title(title)
+        axis.set_xlabel("Alpha")
+        axis.set_ylabel(y_label)
         axis.grid(True, alpha=0.25)
     figure.suptitle(r"Análisis del parámetro $\alpha$")
     figure.savefig(output_dir / "alpha_analysis.svg", format="svg")
@@ -184,7 +184,13 @@ def main():
         "AvgSearchTime",
         "AvgDiskReads",
     }
-    alpha_columns = {"Alpha", "RAM_Writes", "AvgDiskReads"}
+    alpha_columns = {
+        "Alpha",
+        "BuildTime",
+        "RAM_Writes",
+        "AvgSearchTime",
+        "AvgDiskReads",
+    }
     experiment_data = load_csv(
         args.input_dir, "experiment_results.csv", experiment_columns
     )
