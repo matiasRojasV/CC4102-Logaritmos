@@ -1,18 +1,15 @@
-"""Genera las figuras principales a partir de los resultados experimentales."""
-
 from argparse import ArgumentParser
 from pathlib import Path
-
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import pandas as pd
-
 
 TREE_LABELS = {
     "BTree": "Árbol B",
     "Beps025": r"$B^\epsilon_{0.25}$",
     "Beps075": r"$B^\epsilon_{0.75}$",
 }
+
 TREE_COLORS = {
     "BTree": "#1f77b4",
     "Beps025": "#ff7f0e",
@@ -39,9 +36,6 @@ def parse_args():
 def load_csv(input_dir, filename, columns):
     """Carga un CSV y verifica que tenga las columnas necesarias."""
     path = input_dir / filename
-    if not path.exists():
-        raise FileNotFoundError(f"No se encontró el archivo de resultados: {path}")
-
     data = pd.read_csv(path)
     missing = sorted(set(columns) - set(data.columns))
     if missing:
@@ -139,6 +133,7 @@ def plot_alpha(data, output_dir):
         ("AvgSearchTime", "Tiempo promedio de búsqueda", "Tiempo (s)", "#2ca02c"),
         ("AvgDiskReads", "Lecturas por búsqueda", "AvgDiskReads", "#9467bd"),
     ]
+    
     figure, axes = plt.subplots(2, 2, figsize=(13, 9), constrained_layout=True)
     for axis, (metric, title, y_label, color) in zip(axes.flat, metrics):
         axis.plot(data["Alpha"], data[metric], marker="o", color=color)

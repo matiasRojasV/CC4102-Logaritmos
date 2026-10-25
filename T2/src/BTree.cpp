@@ -9,16 +9,19 @@ BTree::BTree() {
     ++counters_.writes;
 }
 
-// Cada lectura o escritura del arreglo representa un acceso a un bloque.
+
+// Cada lectura o escritura del arreglo representa un acceso a un bloque
 BTreeNode BTree::readNode(int index) {
     ++counters_.reads;
     return nodes_[index];
 }
 
+
 void BTree::writeNode(int index, const BTreeNode& node) {
     nodes_[index] = node;
     ++counters_.writes;
 }
+
 
 // Guarda un nodo nuevo al final del arreglo en mem
 int BTree::append(const BTreeNode& node) {

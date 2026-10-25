@@ -90,7 +90,6 @@ public:
 
 private:
     using Node = BTreeEpsilonNode<C, LMAX>;
-
     double alpha_;
     std::vector<Node> nodes_;
     mutable Counters counters_;
@@ -108,10 +107,12 @@ private:
         ++node.bufferCount;
     }
 
-    // Inserta varios valores ordenados en el buffer.
+    
+    // Inserta varios valores ordenados en el buffer
     static void insertSorted(Node& node, const std::vector<Pair>& values) {
         for (const Pair& value : values) insertSorted(node, value);
     }
+
 
     // Busca el padre de un nodo recorriendo el árbol
     int parentOf(int child) const {
