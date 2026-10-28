@@ -58,8 +58,7 @@ En el árbol $B^epsilon$, las inserciones se agregan ordenadamente al buffer del
 
 La diferencia principal es el momento en que los pares se envían hacia las hojas. En el árbol B cada inserción desciende inmediatamente hasta el nodo correspondiente. En $B^epsilon$ las inserciones permanecen temporalmente en buffers internos y se envían en lotes durante un `flush`, reduciendo potencialmente la cantidad amortizada de accesos por elemento.
 
-
-pagebreak()
+#pagebreak()
 
 == Algoritmo de Vaciado de Buffers (Flush)
 
@@ -67,11 +66,11 @@ El vaciado de buffers es la operación central del Árbol $B^epsilon$. En nuestr
 
 - *Criterio del Palomar y Umbral $alpha$:* Dado un nodo interno desbordado con $k_"buffer"$ elementos y $k_"llaves" + 1$ hijos, se calcula la carga promedio $f = ceil((k_"buffer") / (k_"llaves" + 1))$. Se seleccionan únicamente aquellos hijos que reciben al menos $ceil(f times alpha)$ elementos, donde $alpha = 0.5$ fue el valor base seleccionado para los experimentos principales.
 - *Agrupamiento por Hijo:* Los elementos del buffer se clasifican en arreglos temporales asignados a cada hijo en una sola pasada $O(k_"buffer")$.
-- *Procesamiento de Derecha a Izquierda:* La transferencia de elementos hacia los hijos identificados se realiza recorriendo los índices de los hijos de derecha a izquierda. Esta decisión previene errores de desfasamiento en los índices de los subárboles en caso de que uno de los hijos sufra un *split* (división) durante el vaciado.
+- *Procesamiento de Derecha a Izquierda:* La transferencia de elementos hacia los hijos identificados se realiza recorriendo los índices de los hijos de derecha a izquierda. Esta decisión previene errores de desfasamiento en los índices de los subárboles en caso de que uno de los hijos sufra un *split* durante el vaciado.
 
-Desde el punto de vista amortizado, un `flush` procesa simultáneamente un grupo de pares en lugar de ejecutar una transferencia independiente por cada inserción. Si un buffer contiene $m$ elementos, el agrupamiento cuesta $O(m)$ y la transferencia depende de la cantidad de hijos afectados y de los posibles *split*. Este costo se reparte entre los $m$ elementos procesados, por lo que el costo promedio por inserción puede ser menor que en un árbol B tradicional. Sin embargo, esta ventaja asintótica no implica necesariamente menor tiempo de CPU: ordenar buffers, crear vectores temporales y buscar padres también introduce trabajo adicional.
+Desde el punto de vista amortizado, un `flush` procesa simultáneamente un grupo de pares en lugar de ejecutar una transferencia independiente por cada inserción. Si un buffer contiene $m$ elementos, el agrupamiento cuesta $O(m)$ y la transferencia depende de la cantidad de hijos afectados y de los posibles split. Este costo se reparte entre los $m$ elementos procesados, por lo que el costo promedio por inserción puede ser menor que en un árbol B tradicional. Sin embargo, esta ventaja asintótica no implica necesariamente menor tiempo de CPU: ordenar buffers, crear vectores temporales y buscar padres también introduce trabajo adicional.
 
-En términos de accesos a bloques, el árbol B puede requerir un recorrido de altura $h_B$ por inserción, con costo del orden de $O(log_B N)$. En un árbol $B^epsilon$, los pares se acumulan y se amortiza el costo de propagar un lote sobre sus elementos. La formulación asintótica usual expresa este costo como del orden de $O((log_(B^epsilon) N) / B^(1-epsilon))$ accesos amortizados por inserción, ignorando constantes y el costo de los *split*. Esta expresión explica la motivación de los buffers, mientras que las mediciones muestran el efecto de los costos adicionales de la implementación concreta.
+En términos de accesos a bloques, el árbol B puede requerir un recorrido de altura $h_B$ por inserción, con costo del orden de $O(log_B N)$. En un árbol $B^epsilon$, los pares se acumulan y se amortiza el costo de propagar un lote sobre sus elementos. La formulación asintótica usual expresa este costo como del orden de $O((log_(B^epsilon) N) / B^(1-epsilon))$ accesos amortizados por inserción, ignorando constantes y el costo de los split. Esta expresión explica la motivación de los buffers, mientras que las mediciones muestran el efecto de los costos adicionales de la implementación concreta.
 
 El parámetro $alpha$ controla qué grupos se transfieren durante cada `flush`. Un umbral bajo procesa más grupos, mientras que uno alto deja más elementos pendientes. Por ello, $alpha$ afecta simultáneamente la frecuencia de los vaciados, el tamaño de los lotes, las escrituras simuladas y la cantidad de buffers que deben inspeccionarse durante una búsqueda.
 
@@ -85,7 +84,9 @@ En un árbol $B^epsilon$, la ramificación interna es del orden de $B^epsilon$, 
 
 $ h_(B^epsilon) = O(log_(B^epsilon) N). $
 
-En nuestras configuraciones, $B^epsilon_{0.25}$ utiliza $c+1=5$ hijos por nodo interno, mientras que $B^epsilon_{0.75}$ utiliza $c+1=127$. Por lo tanto, se espera que $B^epsilon_{0.75}$ tenga menor altura que $B^epsilon_{0.25}$. Esto ayuda a explicar que $B^epsilon_{0.75}$ obtuviera mejores tiempos de búsqueda que $B^epsilon_{0.25}$ para los tamaños grandes, aun cuando su buffer es más pequeño y registra más escrituras.
+En nuestras configuraciones, $B^epsilon_0.25$ utiliza $c+1=5$ hijos por nodo interno, mientras que $B^epsilon_0.75$ utiliza $c+1=127$. Por lo tanto, se espera que $B^epsilon_0.75$ tenga menor altura que $B^epsilon_0.25$. Esto ayuda a explicar que $B^epsilon_0.75$ obtuviera mejores tiempos de búsqueda que $B^epsilon_0.25$ para los tamaños grandes, aun cuando su buffer es más pequeño y registra más escrituras.
+
+#pagebreak()
 
 == Búsquedas por Rango sobre Archivo Binario
 
@@ -96,37 +97,7 @@ Una vez construidos en RAM, los árboles se serializan escribiendo sus nodos de 
 - *Inspección de Buffers en Árbol $B^epsilon$:* Dado que en el Árbol $B^epsilon$ los datos pueden encontrarse en tránsito en cualquier nivel, la búsqueda examina el buffer de cada nodo interno visitado recolectando las llaves dentro del rango $[l, u]$, para luego continuar recursivamente hacia los hijos cuyas llaves divisorias traslapen el intervalo buscado.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 = Resultados
-
 == Especificaciones del Experimento
 Los experimentos se ejecutaron utilizando el dataset de mediciones de temperatura de la Estación Quinta Normal (enero 2019 a julio 2025). Las pruebas de inserción evaluaron volúmenes de datos $N$ desde $2^15$ hasta $2^26$ elementos. Para la fase de consulta, se realizaron 50 búsquedas por rango aleatorias por cada árbol y cada tamaño $N$, utilizando ventanas de tiempo de 604.800 segundos (equivalentes a una semana). 
 
@@ -136,7 +107,7 @@ Los límites inferiores se generaron con `mt19937`, semilla 42 y distribución u
 
 $ [1546300800, 1754006400 - 604800]. $
 
-Para cada consulta se definió $u=l+604800$. El generador se comparte entre los bloques de experimentación, por lo que no necesariamente se utiliza exactamente la misma secuencia de 50 rangos para los tres árboles; las diferencias pequeñas entre tiempos deben interpretarse con cautela. El experimento adicional de $alpha$ utilizó $N=2^24$, la configuración $B^epsilon_{0.25}$, ocho valores de $alpha$ entre 0.1 y 0.8, 20 búsquedas por valor y semilla 4242.
+Para cada consulta se definió $u=l+604800$. El generador se comparte entre los bloques de experimentación, por lo que no necesariamente se utiliza exactamente la misma secuencia de 50 rangos para los tres árboles; las diferencias pequeñas entre tiempos deben interpretarse con cautela. El experimento adicional de $alpha$ utilizó $N=2^24$, la configuración $B^epsilon_0.25$, ocho valores de $alpha$ entre 0.1 y 0.8, 20 búsquedas por valor y semilla 4242.
 
 
 === Setup Experimental
@@ -163,11 +134,11 @@ Para cada consulta se definió $u=l+604800$. El generador se comparte entre los 
 == Costo de Inserción y Construcción
 
 #figure(
-  image("plot/insertion_cost.svg", width: 100%),
+  image("plot/insertion_cost.svg", width: 110%),
   caption: [Lecturas, escrituras y tiempo de construcción en función de $N$.]
 )
 
-En la figura 1 se observa que el Árbol B clásico registró la menor cantidad de escrituras en RAM para los tamaños grandes. Sin embargo, no fue la estructura más rápida en tiempo de construcción. Para $N = 2^{26}$, la configuración $B^epsilon_{0.75}$ obtuvo el menor tiempo, con aproximadamente 35.6 segundos; el Árbol B tardó 61.2 segundos y $B^epsilon_{0.25}$ tardó 84.4 segundos. La variante $B^epsilon_{0.75}$ presentó el mayor volumen de escrituras en RAM, con aproximadamente 100.1 millones de escrituras.
+En la figura 1 se observa que el Árbol B clásico registró la menor cantidad de escrituras en RAM para los tamaños grandes. Sin embargo, no fue la estructura más rápida en tiempo de construcción. Para $N = 2^26$, la configuración $B^epsilon_0.75$ obtuvo el menor tiempo, con aproximadamente 35.6 segundos; el Árbol B tardó 61.2 segundos y $B^epsilon_0.25$ tardó 84.4 segundos. La variante $B^epsilon_0.75$ presentó el mayor volumen de escrituras en RAM, con aproximadamente 100.1 millones de escrituras.
 
 == Costos de Búsqueda por Rango
 
@@ -176,16 +147,16 @@ En la figura 1 se observa que el Árbol B clásico registró la menor cantidad d
   caption: [Lecturas de bloques y tiempo promedio de búsqueda por rango.]
 )
 
-La figura 2 muestra que el Árbol B no fue consistentemente la estructura más rápida en tiempo de CPU. Para $N=2^{26}$, $B^epsilon_{0.75}$ obtuvo el menor tiempo promedio, con aproximadamente 0.00294 segundos, seguido por el Árbol B con 0.00321 segundos y $B^epsilon_{0.25}$ con 0.00369 segundos. En cuanto a lecturas de bloques, $B^epsilon_{0.25}$ utilizó menos lecturas que el Árbol B para los tamaños grandes, aunque no para todos los valores de $N$.
+La figura 2 muestra que el Árbol B no fue consistentemente la estructura más rápida en tiempo de CPU. Para $N=2^26$, $B^epsilon_0.75$ obtuvo el menor tiempo promedio, con aproximadamente 0.00294 segundos, seguido por el Árbol B con 0.00321 segundos y $B^epsilon_0.25$ con 0.00369 segundos. En cuanto a lecturas de bloques, $B^epsilon_0.25$ utilizó menos lecturas que el Árbol B para los tamaños grandes, aunque no para todos los valores de $N$.
 
 == Tamaño de los árboles
 
 #figure(
-  image("plot/tree_size.svg", width: 100%),
+  image("plot/tree_size.svg", width: 70%),
   caption: [Cantidad de nodos, equivalentes a bloques de 4096 bytes, en función de $N$.]
 )
 
-La figura 3 muestra que $B^epsilon_{0.25}$ utiliza menos nodos que las otras estructuras para todos los tamaños evaluados. Para $N=2^{26}$, utiliza 219.664 nodos, mientras que el Árbol B utiliza 279.471 y $B^epsilon_{0.75}$ utiliza 253.304. Esto se explica por la mayor capacidad de almacenamiento de sus buffers y por la menor cantidad de hijos divisores de esta configuración.
+La figura 3 muestra que $B^epsilon_0.25$ utiliza menos nodos que las otras estructuras para todos los tamaños evaluados. Para $N=2^26$, utiliza 219.664 nodos, mientras que el Árbol B utiliza 279.471 y $B^epsilon_0.75$ utiliza 253.304. Esto se explica por la mayor capacidad de almacenamiento de sus buffers y por la menor cantidad de hijos divisores de esta configuración.
 
 == Comparación de una misma búsqueda
 
@@ -194,7 +165,7 @@ La figura 3 muestra que $B^epsilon_{0.25}$ utiliza menos nodos que las otras est
   caption: [Temperaturas obtenidas en una misma búsqueda por rango para $N=2^15$ y $N=2^26$.]
 )
 
-La figura 4 muestra los resultados de una búsqueda fija de una semana para dos tamaños de entrada. El intervalo consultado es el mismo, pero los conjuntos no son idénticos porque cada árbol contiene un prefijo de distinto tamaño del dataset. Para $N=2^{15}$ se obtuvieron 97 mediciones, mientras que para $N=2^{26}$ se obtuvieron 195.318 mediciones. La diferencia se debe a que el segundo árbol contiene muchos más pares correspondientes al intervalo consultado.
+La figura 4 muestra los resultados de una búsqueda fija de una semana para dos tamaños de entrada. El intervalo consultado es el mismo, pero los conjuntos no son idénticos porque cada árbol contiene un prefijo de distinto tamaño del dataset. Para $N=2^15$ se obtuvieron 97 mediciones, mientras que para $N=2^26$ se obtuvieron 195.318 mediciones. La diferencia se debe a que el segundo árbol contiene muchos más pares correspondientes al intervalo consultado.
 
 == Resultados del Parámetro $alpha$
 
@@ -203,21 +174,23 @@ La figura 4 muestra los resultados de una búsqueda fija de una semana para dos 
   caption: [Impacto de $alpha$ sobre el tiempo de construcción, las escrituras de inserción, el tiempo de búsqueda y las lecturas promedio por búsqueda.]
 )
 
-Al fijar $N = 2^{24}$ y variar el parámetro de agresividad de vaciado $alpha$ entre 0.1 y 0.8, la figura 5 no muestra una tendencia monótona clara. La menor cantidad de lecturas promedio se obtuvo con $alpha=0.1$, con 167.15 lecturas, mientras que el menor tiempo promedio de búsqueda se obtuvo con $alpha=0.7$, con aproximadamente 0.000827 segundos. Las diferencias entre configuraciones son pequeñas, por lo que no es posible identificar un único valor óptimo para todas las métricas con estas 20 consultas por configuración.
+Al fijar $N = 2^24$ y variar el parámetro de agresividad de vaciado $alpha$ entre 0.1 y 0.8, la figura 5 no muestra una tendencia monótona clara. La menor cantidad de lecturas promedio se obtuvo con $alpha=0.1$, con 167.15 lecturas, mientras que el menor tiempo promedio de búsqueda se obtuvo con $alpha=0.7$, con aproximadamente 0.000827 segundos. Las diferencias entre configuraciones son pequeñas, por lo que no es posible identificar un único valor óptimo para todas las métricas con estas 20 consultas por configuración.
 
 = Análisis
 
-El comportamiento observado durante la fase de construcción difiere de la ventaja teórica de las inserciones por lotes del Árbol $B^epsilon$. Aunque el Árbol B clásico registró menos escrituras simuladas, la configuración $B^epsilon_{0.75}$ obtuvo el menor tiempo de construcción para $N=2^{26}$. En cambio, $B^epsilon_{0.25}$ fue la configuración más lenta, lo que sugiere que la sobrecarga de gestionar, ordenar y vaciar (*flush*) sus buffers grandes penalizó el tiempo de CPU. $B^epsilon_{0.75}$ registró más escrituras debido a su buffer reducido ($l_max=384$), pero su mayor ramificación pudo compensar ese costo en tiempo total.
+El comportamiento observado durante la fase de construcción difiere de la ventaja teórica de las inserciones por lotes del Árbol $B^epsilon$. Aunque el Árbol B clásico registró menos escrituras simuladas, la configuración $B^epsilon_0.75$ obtuvo el menor tiempo de construcción para $N=2^26$. En cambio, $B^epsilon_0.25$ fue la configuración más lenta, lo que sugiere que la sobrecarga de gestionar, ordenar y vaciar (flush) sus buffers grandes penalizó el tiempo de CPU. $B^epsilon_0.75$ registró más escrituras debido a su buffer reducido ($l_max=384$), pero su mayor ramificación pudo compensar ese costo en tiempo total.
 
-En la fase de consulta, el Árbol B no domina siempre en tiempo de CPU: para $N=2^{26}$, $B^epsilon_{0.75}$ obtuvo el menor tiempo promedio. Las variantes $B^epsilon$ deben inspeccionar elementos pendientes en los buffers de los nodos internos, pero su menor altura puede compensar parte de ese costo. Además, $B^epsilon_{0.25}$ obtuvo menos lecturas de bloques que el Árbol B para los tamaños grandes, aunque esta ventaja no aparece en los tamaños pequeños.
+En la fase de consulta, el Árbol B no domina siempre en tiempo de CPU: para $N=2^26$, $B^epsilon_0.75$ obtuvo el menor tiempo promedio. Las variantes $B^epsilon$ deben inspeccionar elementos pendientes en los buffers de los nodos internos, pero su menor altura puede compensar parte de ese costo. Además, $B^epsilon_0.25$ obtuvo menos lecturas de bloques que el Árbol B para los tamaños grandes, aunque esta ventaja no aparece en los tamaños pequeños.
 
-== Conclusión
+#pagebreak()
+
+= Conclusión
 
 La implementación permitió comparar un Árbol B y dos configuraciones de árboles $B^epsilon$ utilizando nodos de 4096 bytes, inserciones en un arreglo que simula memoria externa y búsquedas realizadas sobre archivos binarios serializados. Los resultados muestran que no existe una estructura superior en todas las métricas.
 
-El Árbol B utilizó menos escrituras simuladas que las variantes $B^epsilon$, pero no obtuvo el menor tiempo de construcción para el tamaño máximo. En $N=2^{26}$, $B^epsilon_{0.75}$ fue la configuración más rápida para construir y también obtuvo el menor tiempo promedio de búsqueda. Por otro lado, $B^epsilon_{0.25}$ produjo los árboles más pequeños y, para los tamaños grandes, requirió menos lecturas de bloques durante las búsquedas.
+El Árbol B utilizó menos escrituras simuladas que las variantes $B^epsilon$, pero no obtuvo el menor tiempo de construcción para el tamaño máximo. En $N=2^26$, $B^epsilon_0.75$ fue la configuración más rápida para construir y también obtuvo el menor tiempo promedio de búsqueda. Por otro lado, $B^epsilon_0.25$ produjo los árboles más pequeños y, para los tamaños grandes, requirió menos lecturas de bloques durante las búsquedas.
 
-La hipótesis inicial se cumplió solo parcialmente. Se esperaba que el Árbol B tuviera búsquedas más rápidas, pero los resultados favorecieron a $B^epsilon_{0.75}$ en el tamaño máximo. También se confirmó que los buffers modifican el compromiso entre costo de construcción, cantidad de escrituras, tamaño del árbol y costo de consulta. El análisis de $alpha$ no identificó un valor óptimo único, debido a que las diferencias entre configuraciones fueron pequeñas y se realizaron solo 20 consultas por valor.
+La hipótesis inicial se cumplió solo parcialmente. Se esperaba que el Árbol B tuviera búsquedas más rápidas, pero los resultados favorecieron a $B^epsilon_0.75$ en el tamaño máximo. También se confirmó que los buffers modifican el compromiso entre costo de construcción, cantidad de escrituras, tamaño del árbol y costo de consulta. El análisis de $alpha$ no identificó un valor óptimo único, debido a que las diferencias entre configuraciones fueron pequeñas y se realizaron solo 20 consultas por valor.
 
 Como trabajo futuro, sería conveniente repetir cada configuración varias veces, utilizar exactamente las mismas consultas aleatorias para todos los árboles y reportar intervalos de confianza. En este trabajo no se midieron por separado las alturas exactas, la distribución de elementos entre buffers ni la cantidad de resultados provenientes de cada nivel. Tampoco se aisló completamente el efecto de las cachés del sistema operativo ni se separó el costo de CPU de cada operación interna del `flush`. Estas son limitaciones que podrían abordarse en una extensión, junto con la evaluación de más valores de $alpha$ alrededor de los mejores candidatos.
 
